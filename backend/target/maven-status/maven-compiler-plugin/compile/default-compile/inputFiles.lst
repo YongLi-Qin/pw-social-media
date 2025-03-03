@@ -1,0 +1,13 @@
+/Users/matt/Desktop/pw-social-media/backend/src/main/java/com/example/demo/config/CorsConfig.java
+/Users/matt/Desktop/pw-social-media/backend/src/main/java/com/example/demo/dto/LoginRequest.java
+/Users/matt/Desktop/pw-social-media/backend/src/main/java/com/example/demo/security/JwtAuthenticationFilter.java
+/Users/matt/Desktop/pw-social-media/backend/src/main/java/com/example/demo/security/JwtTokenProvider.java
+/Users/matt/Desktop/pw-social-media/backend/src/main/java/com/example/demo/config/SecurityConfig.java
+/Users/matt/Desktop/pw-social-media/backend/src/main/java/com/example/demo/service/AuthService.java
+/Users/matt/Desktop/pw-social-media/backend/src/main/java/com/example/demo/dto/AuthResponse.java
+/Users/matt/Desktop/pw-social-media/backend/src/main/java/com/example/demo/controller/AuthController.java
+/Users/matt/Desktop/pw-social-media/backend/src/main/java/com/example/demo/model/User.java
+/Users/matt/Desktop/pw-social-media/backend/src/main/java/com/example/demo/security/CustomUserDetailsService.java
+/Users/matt/Desktop/pw-social-media/backend/src/main/java/com/example/demo/dto/SignupRequest.java
+/Users/matt/Desktop/pw-social-media/backend/src/main/java/com/example/demo/PwSocialMediaApplication.java
+/Users/matt/Desktop/pw-social-media/backend/src/main/java/com/example/demo/repository/UserRepository.java

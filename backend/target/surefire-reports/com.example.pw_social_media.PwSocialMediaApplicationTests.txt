@@ -1,0 +1,4 @@
+-------------------------------------------------------------------------------
+Test set: com.example.pw_social_media.PwSocialMediaApplicationTests
+-------------------------------------------------------------------------------
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.109 s -- in com.example.pw_social_media.PwSocialMediaApplicationTests
