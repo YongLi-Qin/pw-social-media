@@ -16,11 +16,13 @@ public class AuthController {
 
     @PostMapping("/signup")
     public ResponseEntity<AuthResponse> signup(@RequestBody SignupRequest request) {
+        System.out.println("Signup request: " + request);
         return ResponseEntity.ok(authService.signup(request));
     }
 
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest request) {
+        System.out.println("login request: " + request);
         return ResponseEntity.ok(authService.login(request));
     }
 } 

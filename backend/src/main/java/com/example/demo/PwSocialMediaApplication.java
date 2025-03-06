@@ -8,4 +8,4 @@ public class PwSocialMediaApplication {
     public static void main(String[] args) {
         SpringApplication.run(PwSocialMediaApplication.class, args);
     }
-} 
+}
