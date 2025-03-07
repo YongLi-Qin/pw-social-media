@@ -73,7 +73,9 @@ export default function Home() {
             <div className="flex items-center space-x-4">
               <button
                 onClick={() => navigate('/profile')}
-                className="flex items-center space-x-2 text-gray-300 hover:text-white transition-colors"
+                className="flex items-center space-x-2 px-4 py-2 rounded-lg 
+                         bg-blue-600 text-white hover:bg-blue-700 
+                         transition-all duration-200 font-medium"
               >
                 <FaUser />
                 <span>Profile</span>
@@ -81,10 +83,11 @@ export default function Home() {
               <button
                 onClick={() => {
                   localStorage.removeItem('token');
+                  localStorage.removeItem('user');
                   navigate('/login');
                 }}
-                className="px-4 py-2 border border-gray-600 text-gray-300 rounded-lg 
-                         hover:bg-gray-800 hover:border-gray-500 transition-all duration-200"
+                className="px-4 py-2 bg-red-600 text-white font-medium rounded-lg 
+                         hover:bg-red-700 transition-all duration-200"
               >
                 Logout
               </button>

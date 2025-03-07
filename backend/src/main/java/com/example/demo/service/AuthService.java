@@ -30,24 +30,26 @@ public class AuthService {
         user.setEmail(request.getEmail());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setName(request.getName());
+        user.setAvatar(""); // 这里你可以改成默认的头像 URL
 
         user = userRepository.save(user);
 
         String token = jwtTokenProvider.generateToken(user);
-        return new AuthResponse(token, user.getEmail(), user.getName());
+        return new AuthResponse(token, user.getEmail(), user.getName(), user.getAvatar());
     }
 
     public AuthResponse login(LoginRequest request) {
         Authentication authentication = authenticationManager.authenticate(
-            new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
+                new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
         );
 
         User user = userRepository.findByEmail(request.getEmail())
-            .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new RuntimeException("User not found"));
 
         String token = jwtTokenProvider.generateToken(user);
-        return new AuthResponse(token, user.getEmail(), user.getName());
+        return new AuthResponse(token, user.getEmail(), user.getName(), user.getAvatar());
     }
+
 
     public User getCurrentUser(String token) {
         Long userId = jwtTokenProvider.getUserIdFromToken(token);

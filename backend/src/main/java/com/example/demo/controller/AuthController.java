@@ -22,6 +22,7 @@ import java.util.Collections;
 
 @RestController
 @RequestMapping("/api/auth")
+@CrossOrigin(origins = "http://localhost:5173")
 @RequiredArgsConstructor
 public class AuthController {
     private final AuthService authService;
@@ -38,6 +39,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
+    @CrossOrigin(origins = "http://localhost:5173")
     public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest request) {
         System.out.println("login request: " + request);
         return ResponseEntity.ok(authService.login(request));
@@ -57,12 +59,32 @@ public class AuthController {
             }
 
             Payload payload = idToken.getPayload();
+            String userId = payload.getSubject(); // Google的用户ID
+            String email = payload.getEmail();
+            String name = (String) payload.get("name"); // 正确获取用户名
+            String pictureUrl = (String) payload.get("picture"); // 获取头像URL
+            
+            System.out.println("Google user info: " + name + ", " + email + ", " + pictureUrl);
+            
             String token = oAuth2Service.processOAuthLogin(payload);
+            
+            // 确保用户存在于数据库
+            User user = userRepository.findByEmail(email).orElseGet(() -> {
+                User newUser = new User();
+                newUser.setEmail(email);
+                newUser.setName(name != null ? name : "Google User");
+                // 设置其他必要字段
+                return userRepository.save(newUser);
+            });
 
-            User user = userRepository.findByEmail(payload.getEmail()).get();
-
-            return ResponseEntity.ok(new AuthResponse(token, user.getEmail(), user.getName()));
+            return ResponseEntity.ok(new AuthResponse(
+                token, 
+                user.getEmail(),
+                user.getName(),
+                pictureUrl
+            ));
         } catch (Exception e) {
+            e.printStackTrace();
             return ResponseEntity.status(500).body("Authentication failed: " + e.getMessage());
         }
     }

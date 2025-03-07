@@ -1,5 +1,6 @@
 package com.example.pw_social_media;  // ✅ 确保包名正确
 
+import com.example.demo.PwSocialMediaApplication;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
