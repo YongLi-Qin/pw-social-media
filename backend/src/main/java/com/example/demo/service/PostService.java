@@ -1,5 +1,6 @@
 package com.example.demo.service;
 
+import com.example.demo.model.GameType;
 import com.example.demo.model.Post;
 import com.example.demo.repository.PostRepository;
 import lombok.RequiredArgsConstructor;
@@ -45,5 +46,9 @@ public class PostService {
         }
         
         postRepository.delete(post);
+    }
+
+    public List<Post> getPostsByGameType(GameType gameType) {
+        return postRepository.findByGameTypeOrderByCreatedAtDesc(gameType);
     }
 }

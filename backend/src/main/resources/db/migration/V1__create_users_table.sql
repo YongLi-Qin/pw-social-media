@@ -8,7 +8,6 @@ CREATE TABLE IF NOT EXISTS users (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
--- 添加一些测试数据（密码是 'password' 的 bcrypt 哈希）
 INSERT INTO users (email, password, name) VALUES
 ('test@example.com', '$2a$10$ZvqDxBWh9hL.YJ.UZD3wz.vC.TqRzHGNqGVx2t9T8HF9qYzxJOzWi', 'Test User'),
 ('admin@example.com', '$2a$10$ZvqDxBWh9hL.YJ.UZD3wz.vC.TqRzHGNqGVx2t9T8HF9qYzxJOzWi', 'Admin User'); 

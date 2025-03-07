@@ -35,4 +35,9 @@ public class Post {
 
     @UpdateTimestamp
     private LocalDateTime updatedAt;
+
+
+    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    private GameType gameType = GameType.GENERAL;
 }

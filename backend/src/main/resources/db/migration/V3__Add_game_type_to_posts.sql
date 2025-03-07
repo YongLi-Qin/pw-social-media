@@ -1,0 +1,4 @@
+ALTER TABLE posts
+    ADD COLUMN game_type VARCHAR(255) NOT NULL DEFAULT 'GENERAL';
+
+UPDATE posts SET game_type = 'GENERAL' WHERE game_type IS NULL;

@@ -19,4 +19,11 @@ public class User {
 
     private String name;
     private String avatar;
+
+
+    @Column
+    private String provider; // "local" or "google"
+
+    @Column
+    private String providerId; // Google's user ID
 } 
