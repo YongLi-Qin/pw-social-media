@@ -10,6 +10,24 @@ const api = axios.create({
   },
 });
 
+export enum GameType {
+  GENERAL = 'GENERAL',
+  LEAGUE_OF_LEGENDS = 'LEAGUE_OF_LEGENDS',
+  VALORANT = 'VALORANT'
+}
+
+export interface PostRequest {
+  content: string;
+  imageUrl?: string;
+  gameType: GameType;
+}
+
+// 添加按游戏类型获取帖子的方法
+export const getPostsByGameType = async (gameType: GameType) => {
+  const response = await api.get(`/posts/game/${gameType}`);
+  return response.data;
+};
+
 // 请求拦截器添加 token
 api.interceptors.request.use(
   (config) => {
@@ -66,5 +84,16 @@ export const updatePost = async (postId: number, content: string) => {
 export const deletePost = async (postId: number) => {
   await api.delete(`/posts/${postId}`);
 };
+
+export async function googleLogin(token: string) {
+  return fetch('http://localhost:8000/api/auth/google', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ credential: token }),
+  }).then((res) => res.json());
+}
+
 
 export default api; 
