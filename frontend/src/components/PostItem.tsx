@@ -27,6 +27,47 @@ interface PostItemProps {
   onPostUpdated: () => void;
 }
 
+// Helper function to get ranking image path
+const getRankingImagePath = (gameType: string, rankingName: string): string => {
+  let imagePath = '';
+  
+  if (gameType === 'LEAGUE_OF_LEGENDS') {
+    // For League of Legends, use the original path and naming
+    const baseRank = rankingName.toLowerCase();
+    imagePath = `/images/lol-ranking/lol-${baseRank}.png`;
+  } else if (gameType === 'VALORANT') {
+    // For Valorant, use the new path and naming convention
+    if (rankingName === 'Radiant') {
+      imagePath = `/images/Valorant-ranking/Radiant_Rank.png`;
+    } else {
+      // Extract rank name and number (e.g., "Iron 1" -> "Iron_1_rank")
+      const [rankBase, rankNumber] = rankingName.split(' ');
+      imagePath = `/images/Valorant-ranking/${rankBase}_${rankNumber}_Rank.png`;
+    }
+  }
+  
+  // Debug logging
+  console.log(`[DEBUG] Game Type: ${gameType}, Rank: ${rankingName}, Path: ${imagePath}`);
+  
+  return imagePath;
+};
+
+// Helper function to get rank color for fallback
+const getRankColor = (rankName: string): string => {
+  switch(rankName.toLowerCase()) {
+    case 'iron': return 'bg-gray-500';
+    case 'bronze': return 'bg-amber-700';
+    case 'silver': return 'bg-gray-300';
+    case 'gold': return 'bg-yellow-500';
+    case 'platinum': return 'bg-cyan-400';
+    case 'diamond': return 'bg-blue-400';
+    case 'master': return 'bg-purple-500';
+    case 'grandmaster': return 'bg-red-500';
+    case 'challenger': return 'bg-gradient-to-r from-blue-500 to-purple-500';
+    default: return 'bg-gray-400';
+  }
+};
+
 export default function PostItem({ post, onPostUpdated }: PostItemProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(post.content);
@@ -80,102 +121,144 @@ export default function PostItem({ post, onPostUpdated }: PostItemProps) {
   
   return (
     <div className="bg-white rounded-lg shadow p-4 mb-4">
-      {/* Post header with user info */}
-      <div className="flex justify-between items-start mb-3">
-        <div className="flex items-center">
-          <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold">
-            {post.user.name.charAt(0).toUpperCase()}
+      {/* Post header with user info and game badges */}
+      <div className="flex flex-col mb-3">
+        {/* User info row */}
+        <div className="flex justify-between items-center mb-2">
+          <div className="flex items-center">
+            <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold">
+              {post.user.name.charAt(0).toUpperCase()}
+            </div>
+            <div className="ml-3">
+              <div className="font-medium">{post.user.name}</div>
+              <div className="text-xs text-gray-500">{formattedDate}</div>
+            </div>
           </div>
-          <div className="ml-3">
-            <div className="font-medium">{post.user.name}</div>
-            <div className="text-xs text-gray-500">{formattedDate}</div>
-          </div>
+          
+          {/* Edit/Delete buttons for own posts */}
+          {isCurrentUserPost && (
+            <div className="flex space-x-2">
+              <button 
+                onClick={() => setIsEditing(!isEditing)} 
+                className="text-blue-500 hover:text-blue-700"
+                aria-label="Edit post"
+              >
+                <FaEdit />
+              </button>
+              <button 
+                onClick={handleDelete} 
+                disabled={isDeleting}
+                className="text-red-500 hover:text-red-700"
+                aria-label="Delete post"
+              >
+                <FaTrash />
+              </button>
+            </div>
+          )}
         </div>
         
-        {/* Game type and ranking badge */}
-        <div className="flex items-center space-x-2">
-          {post.gameType !== 'GENERAL' && (
-            <div className="flex items-center px-2 py-1 bg-gray-100 rounded-full text-xs">
-              {getGameIcon()}
-              <span className="ml-1">{post.gameType.replace('_', ' ')}</span>
-            </div>
-          )}
-          
-          {/* Display ranking if available */}
-          {post.gameRanking && (
-            <div className="px-2 py-1 bg-blue-100 text-blue-800 rounded-full text-xs font-medium">
-              {post.gameRanking.rankingName}
-            </div>
-          )}
-        </div>
+        {/* Game badges row */}
+        {(post.gameType !== 'GENERAL' || post.gameRanking) && (
+          <div className="flex flex-wrap items-center gap-3 mt-2">
+            {post.gameType !== 'GENERAL' && (
+              <div className="flex items-center px-4 py-2 bg-gray-100 rounded-lg text-sm border border-gray-200 shadow-sm h-14 min-w-[140px]">
+                <span className="text-2xl mr-2">{getGameIcon()}</span>
+                <span className="font-semibold">{post.gameType.replace('_', ' ')}</span>
+              </div>
+            )}
+            
+            {post.gameRanking && (
+              <div className="flex items-center px-4 py-2 bg-blue-50 text-blue-800 rounded-lg text-sm font-medium border border-blue-100 shadow-sm h-14 min-w-[140px]">
+                <div className="flex items-center justify-center w-12 h-12 mr-2">
+                  {post.gameType === 'LEAGUE_OF_LEGENDS' || post.gameType === 'VALORANT' ? (
+                    <img 
+                      src={getRankingImagePath(post.gameType, post.gameRanking.rankingName)} 
+                      alt={post.gameRanking.rankingName}
+                      className={`${post.gameType === 'LEAGUE_OF_LEGENDS' ? 'w-12 h-12' : 'w-8 h-8'} object-contain`}
+                      onError={(e) => {
+                        // If image fails to load, log the error and use colored circle as fallback
+                        const target = e.currentTarget;
+                        console.error(`[ERROR] Failed to load image: ${target.src}`);
+                        
+                        // Check if the file exists on the server
+                        fetch(target.src)
+                          .then(response => {
+                            console.log(`[DEBUG] Image fetch status: ${response.status} ${response.statusText}`);
+                          })
+                          .catch(error => {
+                            console.error(`[ERROR] Image fetch error: ${error}`);
+                          });
+                        
+                        target.style.display = 'none';
+                        
+                        // Add colored circle as fallback
+                        const parent = target.parentElement;
+                        if (parent) {
+                          const rankColor = getRankColor(post.gameRanking.rankingName);
+                          const circle = document.createElement('div');
+                          circle.className = `w-6 h-6 rounded-full mr-3 ${rankColor}`;
+                          parent.insertBefore(circle, target.nextSibling);
+                        }
+                      }}
+                    />
+                  ) : (
+                    // For other game types, use colored circle
+                    <div className={`w-6 h-6 rounded-full ${getRankColor(post.gameRanking.rankingName)}`}></div>
+                  )}
+                </div>
+                <span className="font-semibold">{post.gameRanking.rankingName}</span>
+              </div>
+            )}
+          </div>
+        )}
       </div>
       
       {/* Post content */}
-      {isEditing ? (
-        <div className="mb-3">
-          <textarea
-            className="w-full p-2 border border-gray-300 rounded resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            rows={3}
-            value={editContent}
-            onChange={(e) => setEditContent(e.target.value)}
-          />
-        </div>
-      ) : (
-        <div className="mb-3 whitespace-pre-wrap">{post.content}</div>
-      )}
+      <div className="mb-3">
+        {isEditing ? (
+          <div className="mb-2">
+            <textarea
+              value={editContent}
+              onChange={(e) => setEditContent(e.target.value)}
+              className="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+              rows={3}
+            />
+            <div className="flex justify-end space-x-2 mt-2">
+              <button
+                onClick={() => setIsEditing(false)}
+                className="px-3 py-1 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300 flex items-center"
+              >
+                <FaTimes className="mr-1" /> Cancel
+              </button>
+              <button
+                onClick={handleSave}
+                className="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 flex items-center"
+              >
+                <FaSave className="mr-1" /> Save
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="text-gray-800 whitespace-pre-wrap">{post.content}</div>
+        )}
+      </div>
       
       {/* Post image if available */}
       {post.imageUrl && (
         <div className="mb-3">
-          <img src={post.imageUrl} alt="Post" className="rounded-lg max-h-96 w-auto" />
+          <img src={post.imageUrl} alt="Post attachment" className="rounded-lg max-h-96 w-auto" />
         </div>
       )}
       
-      {/* Action buttons for post owner */}
-      {isCurrentUserPost && (
-        <div className="flex justify-end space-x-2 mt-2">
-          {isEditing ? (
-            <>
-              <button
-                onClick={handleSave}
-                className="flex items-center space-x-1 px-3 py-1 bg-green-500 text-white rounded-lg hover:bg-green-600"
-                disabled={!editContent.trim()}
-              >
-                <FaSave />
-                <span>Save</span>
-              </button>
-              <button
-                onClick={() => {
-                  setIsEditing(false);
-                  setEditContent(post.content);
-                }}
-                className="flex items-center space-x-1 px-3 py-1 bg-gray-500 text-white rounded-lg hover:bg-gray-600"
-              >
-                <FaTimes />
-                <span>Cancel</span>
-              </button>
-            </>
-          ) : (
-            <>
-              <button
-                onClick={() => setIsEditing(true)}
-                className="flex items-center space-x-1 px-3 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
-              >
-                <FaEdit />
-                <span>Edit</span>
-              </button>
-              <button
-                onClick={handleDelete}
-                className="flex items-center space-x-1 px-3 py-1 bg-red-500 text-white rounded-lg hover:bg-red-600"
-                disabled={isDeleting}
-              >
-                <FaTrash />
-                <span>{isDeleting ? 'Deleting...' : 'Delete'}</span>
-              </button>
-            </>
-          )}
+      {/* Post actions */}
+      <div className="flex justify-between items-center text-gray-500 text-sm">
+        <div className="flex space-x-4">
+          {/* Like button could go here */}
+          {/* Comment button could go here */}
         </div>
-      )}
+        
+        {/* Edit/Delete buttons moved to top */}
+      </div>
     </div>
   );
 } 

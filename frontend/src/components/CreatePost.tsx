@@ -57,21 +57,41 @@ export default function CreatePost({ onPostCreated }: { onPostCreated: () => voi
     }
   };
 
+  const getRankingImagePath = (gameType: GameType, rankingName: string): string => {
+    if (gameType === GameType.LEAGUE_OF_LEGENDS) {
+      // For League of Legends, use the original path and naming
+      return `/images/lol-ranking/lol-${rankingName.toLowerCase()}.png`;
+    } else if (gameType === GameType.VALORANT) {
+      // For Valorant, use the new path and naming convention
+      if (rankingName === 'Radiant') {
+        return `/images/Valorant-ranking/Radiant_Rank.png`;
+      } else {
+        // Extract rank name and number (e.g., "Iron 1" -> "Iron_1_rank")
+        const [rankBase, rankNumber] = rankingName.split(' ');
+        return `/images/Valorant-ranking/${rankBase}_${rankNumber}_Rank.png`;
+      }
+    }
+    return '';
+  };
+
   return (
-    <div className="bg-white p-4 rounded-lg shadow mb-6">
+    <div className="bg-white p-6 rounded-lg shadow-md mb-8 border border-gray-200">
+      <h2 className="text-xl font-semibold mb-4 text-gray-800">Create a Post</h2>
+      
       <form onSubmit={handleSubmit}>
         <textarea
-          className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-          rows={3}
+          className="w-full p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-base"
+          rows={4}
           placeholder="What's on your mind?"
           value={content}
           onChange={(e) => setContent(e.target.value)}
         />
         
-        <div className="mt-3 flex flex-wrap justify-between items-center">
-          <div className="flex flex-wrap items-center gap-2 mb-2 sm:mb-0">
+        <div className="mt-4 flex flex-col space-y-4">
+          <div className="flex flex-wrap items-center gap-4">
+            {/* Game selection */}
             <div className="flex items-center space-x-2">
-              <label className="text-sm text-gray-600 font-medium">Game:</label>
+              <label className="text-base text-gray-700 font-medium">Game:</label>
               <div className="relative">
                 <select
                   value={gameType}
@@ -79,13 +99,13 @@ export default function CreatePost({ onPostCreated }: { onPostCreated: () => voi
                     setGameType(e.target.value as GameType);
                     setSelectedRankingId(null);
                   }}
-                  className="pl-8 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm bg-white"
+                  className="pl-10 pr-6 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-base bg-white"
                 >
                   <option value={GameType.GENERAL}>All Games</option>
                   <option value={GameType.LEAGUE_OF_LEGENDS}>League of Legends</option>
                   <option value={GameType.VALORANT}>VALORANT</option>
                 </select>
-                <div className="absolute left-2 top-2 pointer-events-none">
+                <div className="absolute left-3 top-2.5 pointer-events-none text-xl">
                   {gameType === GameType.GENERAL && <SiRiotgames className="text-gray-500" />}
                   {gameType === GameType.LEAGUE_OF_LEGENDS && <SiLeagueoflegends className="text-yellow-500" />}
                   {gameType === GameType.VALORANT && <SiValorant className="text-red-500" />}
@@ -93,18 +113,19 @@ export default function CreatePost({ onPostCreated }: { onPostCreated: () => voi
               </div>
             </div>
             
+            {/* Rank selection */}
             {gameType !== GameType.GENERAL && (
               <div className="flex items-center space-x-2">
-                <label className="text-sm text-gray-600 font-medium">Rank:</label>
+                <label className="text-base text-gray-700 font-medium">Rank:</label>
                 <select
                   value={selectedRankingId || ""}
                   onChange={(e) => setSelectedRankingId(e.target.value ? Number(e.target.value) : null)}
                   disabled={isLoadingRankings || rankings.length === 0}
-                  className="pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-sm bg-white"
+                  className="pr-6 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 text-base bg-white min-w-[180px]"
                 >
                   <option value="">Select rank (optional)</option>
                   {rankings.map(rank => (
-                    <option key={rank.id} value={rank.id}>
+                    <option key={rank.id} value={rank.id} className="flex items-center">
                       {rank.rankingName}
                     </option>
                   ))}
@@ -116,17 +137,43 @@ export default function CreatePost({ onPostCreated }: { onPostCreated: () => voi
             )}
           </div>
           
-          <button
-            type="submit"
-            disabled={isSubmitting || !content.trim()}
-            className={`px-4 py-2 rounded-lg ${
-              isSubmitting || !content.trim()
-                ? 'bg-blue-300 cursor-not-allowed'
-                : 'bg-blue-600 hover:bg-blue-700'
-            } text-white transition duration-200 ease-in-out font-medium`}
-          >
-            {isSubmitting ? 'Posting...' : 'Post'}
-          </button>
+          {/* Selected rank display */}
+          {selectedRankingId && (
+            <div className="flex items-center bg-blue-50 p-4 rounded-lg">
+              <span className="text-lg text-gray-700 mr-4 font-medium">Selected rank:</span>
+              <div className="flex items-center">
+                <img 
+                  src={getRankingImagePath(
+                    gameType, 
+                    rankings.find(r => r.id === selectedRankingId)?.rankingName || ''
+                  )} 
+                  alt="Rank"
+                  className="w-14 h-14 mr-3"
+                  onError={(e) => {
+                    e.currentTarget.style.display = 'none';
+                  }}
+                />
+                <span className="text-lg font-medium text-blue-800">
+                  {rankings.find(r => r.id === selectedRankingId)?.rankingName}
+                </span>
+              </div>
+            </div>
+          )}
+          
+          {/* Submit button */}
+          <div className="flex justify-end">
+            <button
+              type="submit"
+              disabled={isSubmitting || !content.trim()}
+              className={`px-6 py-3 rounded-lg text-base ${
+                isSubmitting || !content.trim()
+                  ? 'bg-blue-300 cursor-not-allowed'
+                  : 'bg-blue-600 hover:bg-blue-700'
+              } text-white transition duration-200 ease-in-out font-medium`}
+            >
+              {isSubmitting ? 'Posting...' : 'Post'}
+            </button>
+          </div>
         </div>
       </form>
     </div>
