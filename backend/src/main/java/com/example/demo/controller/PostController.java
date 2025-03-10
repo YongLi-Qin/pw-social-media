@@ -1,9 +1,13 @@
 package com.example.demo.controller;
 
+import com.example.demo.dto.PostDto;
 import com.example.demo.dto.PostRequest;
+import com.example.demo.model.GameRanking;
+import com.example.demo.model.GameType;
 import com.example.demo.model.Post;
 import com.example.demo.model.User;
-import com.example.demo.model.GameType;
+import com.example.demo.repository.GameRankingRepository;
+import com.example.demo.repository.PostRepository;
 import com.example.demo.service.AuthService;
 import com.example.demo.service.PostService;
 import lombok.RequiredArgsConstructor;
@@ -11,27 +15,37 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/posts")
 @RequiredArgsConstructor
+@CrossOrigin(origins = "http://localhost:5173")
 public class PostController {
     private final AuthService authService;
     private final PostService postService;
+    private final PostRepository postRepository;
+    private final GameRankingRepository gameRankingRepository;
 
     @PostMapping
-    public ResponseEntity<?> createPost(@RequestHeader("Authorization") String authHeader, @RequestBody PostRequest request) {
+    public ResponseEntity<PostDto> createPost(@RequestBody PostRequest request, 
+                                          @RequestHeader("Authorization") String authHeader) {
         String token = authHeader.substring(7);  // 移除 "Bearer " 前缀
         User currentUser = authService.getCurrentUser(token);
-
-        // 使用获取到的用户信息
-        Post post = Post.builder()
-                .content(request.getContent())
-                .imageUrl(request.getImageUrl())
-                .user(currentUser)
-                .build();
-
-        return ResponseEntity.ok(postService.createPost(post));
+        
+        Post post = new Post();
+        post.setContent(request.getContent());
+        post.setUser(currentUser);
+        post.setGameType(request.getGameType());  // 使用请求中的游戏类型
+        
+        // 处理排名ID
+        if (request.getRankingId() != null) {
+            gameRankingRepository.findById(request.getRankingId())
+                .ifPresent(post::setGameRanking);
+        }
+        
+        Post savedPost = postRepository.save(post);
+        return ResponseEntity.ok(convertToDto(savedPost));
     }
 
     @GetMapping("/user")
@@ -43,6 +57,7 @@ public class PostController {
 
     @GetMapping
     public ResponseEntity<List<Post>> getAllPosts() {
+        // 不需要验证用户身份
         return ResponseEntity.ok(postService.getAllPosts());
     }
 
@@ -71,6 +86,39 @@ public class PostController {
 
     @GetMapping("/game/{gameType}")
     public ResponseEntity<List<Post>> getPostsByGameType(@PathVariable GameType gameType) {
+        // 不需要验证用户身份
         return ResponseEntity.ok(postService.getPostsByGameType(gameType));
+    }
+
+    // 添加从Post到PostDto的转换方法
+    private PostDto convertToDto(Post post) {
+        PostDto dto = new PostDto();
+        dto.setId(post.getId());
+        dto.setContent(post.getContent());
+        dto.setImageUrl(post.getImageUrl());
+        dto.setCreatedAt(post.getCreatedAt());
+        dto.setUpdatedAt(post.getUpdatedAt());
+        dto.setGameType(post.getGameType().name());
+        
+        // 设置用户信息
+        if (post.getUser() != null) {
+            PostDto.UserDto userDto = new PostDto.UserDto();
+            userDto.setId(post.getUser().getId());
+            userDto.setName(post.getUser().getName());
+            userDto.setEmail(post.getUser().getEmail());
+            dto.setUser(userDto);
+        }
+        
+        // 设置排名信息
+        if (post.getGameRanking() != null) {
+            PostDto.GameRankingDto rankingDto = new PostDto.GameRankingDto();
+            rankingDto.setId(post.getGameRanking().getId());
+            rankingDto.setGameType(post.getGameRanking().getGameType().name());
+            rankingDto.setRankingName(post.getGameRanking().getRankingName());
+            rankingDto.setRankingScore(post.getGameRanking().getRankingScore());
+            dto.setGameRanking(rankingDto);
+        }
+        
+        return dto;
     }
 }

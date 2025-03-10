@@ -17,6 +17,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.Customizer;
 
 import java.util.List;
 
@@ -38,19 +39,24 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                .cors(cors -> cors.configurationSource(corsConfigurationSource())) // Set CORS
-                .csrf(csrf -> csrf.disable()) // Disable CSRF for API requests
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll() // 允许所有 OPTIONS 请求
-                        .requestMatchers("/api/auth/**").permitAll() // Allow login/signup
-                        .requestMatchers("/api/posts/**").authenticated()
-                        .anyRequest().authenticated()
-                )
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // Make API stateless
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class); // Add JWT filter
-
+            .cors(Customizer.withDefaults()) // 启用CORS
+            .csrf(csrf -> csrf.disable())
+            .authorizeHttpRequests(auth -> auth
+                // 允许不需要认证的公共端点
+                .requestMatchers("/api/auth/**").permitAll()
+                .requestMatchers("/api/posts").permitAll() // 允许获取所有帖子不需要认证
+                .requestMatchers("/api/posts/game/**").permitAll() // 允许按游戏类型获取帖子
+                .requestMatchers("/api/rankings/**").permitAll() // 允许排名API公开访问
+                // 其他端点需要认证
+                .anyRequest().authenticated()
+            )
+            .sessionManagement(session -> session
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            )
+            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+        
         return http.build();
     }
 

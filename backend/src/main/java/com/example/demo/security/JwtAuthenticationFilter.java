@@ -27,6 +27,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             throws ServletException, IOException {
         try {
             String jwt = getJwtFromRequest(request);
+            System.out.println("Request path: " + request.getRequestURI() + ", JWT present: " + (jwt != null));
 
             if (StringUtils.hasText(jwt) && tokenProvider.validateToken(jwt)) {
                 String email = tokenProvider.getEmailFromToken(jwt);
@@ -38,8 +39,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                 SecurityContextHolder.getContext().setAuthentication(authentication);
             }
-        } catch (Exception ex) {
-            logger.error("Could not set user authentication in security context", ex);
+        } catch (Exception e) {
+            System.err.println("JWT authentication error: " + e.getMessage());
+            e.printStackTrace();
         }
 
         filterChain.doFilter(request, response);

@@ -9,6 +9,20 @@ const api = axios.create({
     'Content-Type': 'application/json',
   },
 });
+// 添加 GameRanking 接口
+export interface GameRanking {
+  id: number;
+  gameType: string;
+  rankingName: string;
+  rankingScore: number;
+  rankingType: string;
+}
+
+// 添加获取游戏排名的函数
+export const getRankingsByGameType = async (gameType: GameType): Promise<GameRanking[]> => {
+  const response = await api.get<GameRanking[]>(`/rankings/game/${gameType}`);
+  return response.data;
+};
 
 export enum GameType {
   GENERAL = 'GENERAL',

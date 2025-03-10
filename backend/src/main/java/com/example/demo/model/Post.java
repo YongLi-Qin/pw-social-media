@@ -5,15 +5,17 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
+import com.example.demo.model.GameType;
 
 import java.time.LocalDateTime;
 
-@Data
+@Entity
+@Table(name = "posts")
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Entity
-@Table(name = "posts")
 public class Post {
 
     @Id
@@ -36,8 +38,19 @@ public class Post {
     @UpdateTimestamp
     private LocalDateTime updatedAt;
 
-
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     private GameType gameType = GameType.GENERAL;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "ranking_id")
+    private GameRanking gameRanking;
+
+    public GameRanking getGameRanking() {
+        return gameRanking;
+    }
+
+    public void setGameRanking(GameRanking gameRanking) {
+        this.gameRanking = gameRanking;
+    }
 }
