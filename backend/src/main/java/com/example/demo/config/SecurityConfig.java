@@ -40,22 +40,21 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        System.out.println("Configuring security filter chain...");
+        
         http
-            .cors(Customizer.withDefaults()) // 启用CORS
+            .cors(Customizer.withDefaults())
             .csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
-                // 允许不需要认证的公共端点
-                .requestMatchers("/api/auth/**").permitAll()
-                .requestMatchers("/api/posts").permitAll() // 允许获取所有帖子不需要认证
-                .requestMatchers("/api/posts/game/**").permitAll() // 允许按游戏类型获取帖子
-                .requestMatchers("/api/rankings/**").permitAll() // 允许排名API公开访问
-                // 其他端点需要认证
-                .anyRequest().authenticated()
+                // 临时允许所有请求，仅用于测试
+                .anyRequest().permitAll()
             )
             .sessionManagement(session -> session
                 .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-            )
-            .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+            );
+        
+        // 临时禁用 JWT 过滤器
+        // http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
         
         return http.build();
     }

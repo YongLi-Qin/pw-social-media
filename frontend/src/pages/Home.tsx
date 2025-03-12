@@ -6,6 +6,9 @@ import { getAllPosts, getPostsByGameType, GameType } from '../services/api';
 import { toast, ToastContainer } from 'react-toastify';
 import { FaUser } from 'react-icons/fa';
 import { SiRiotgames, SiLeagueoflegends, SiValorant } from 'react-icons/si';
+import PostItem from '../components/PostItem';
+import CreatePost from '../components/CreatePost';
+import RankingFilter from '../components/RankingFilter';
 
 interface Post {
   id: number;
@@ -17,12 +20,18 @@ interface Post {
     name: string;
     email: string;
   };
+  gameRanking?: {
+    id: number;
+    rankingName: string;
+  };
 }
 
 export default function Home() {
   const [posts, setPosts] = useState<Post[]>([]);
+  const [filteredPosts, setFilteredPosts] = useState<Post[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedGameType, setSelectedGameType] = useState<GameType | null>(null);
+  const [selectedRankings, setSelectedRankings] = useState<number[]>([]);
   const navigate = useNavigate();
 
   const loadPosts = async (gameType: GameType | null = null) => {
@@ -39,6 +48,7 @@ export default function Home() {
       }
       
       setPosts(data);
+      setFilteredPosts(data);
     } catch (error) {
       console.error('Error loading posts:', error);
       toast.error('Failed to load posts');
@@ -51,8 +61,27 @@ export default function Home() {
     loadPosts(selectedGameType);
   }, [selectedGameType]);
 
+  useEffect(() => {
+    if (selectedRankings.length === 0) {
+      const sortedPosts = [...posts].sort((a, b) => 
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
+      setFilteredPosts(sortedPosts);
+    } else {
+      const filtered = posts
+        .filter(post => post.gameRanking && selectedRankings.includes(post.gameRanking.id))
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      
+      setFilteredPosts(filtered);
+    }
+  }, [posts, selectedRankings]);
+
   const handleGameTypeSelect = (gameType: GameType) => {
     setSelectedGameType(gameType === selectedGameType ? null : gameType);
+  };
+
+  const handleFilterChange = (rankings: number[]) => {
+    setSelectedRankings(rankings);
   };
 
   return (
@@ -161,11 +190,35 @@ export default function Home() {
             </button>
           )}
         </div>
-        <PostList
-          initialPosts={posts}
-          isLoading={isLoading}
-          onPostUpdated={() => loadPosts(selectedGameType)}
+        <RankingFilter 
+          onFilterChange={handleFilterChange} 
+          selectedGameType={selectedGameType}
         />
+        {isLoading ? (
+          <div className="text-center py-8">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
+            <p className="mt-2 text-gray-600">Loading posts...</p>
+          </div>
+        ) : filteredPosts.length > 0 ? (
+          <div>
+            {selectedRankings.length > 0 && (
+              <div className="mb-4 text-sm text-gray-600">
+                Showing {filteredPosts.length} filtered posts
+              </div>
+            )}
+            {filteredPosts.map(post => (
+              <PostItem key={post.id} post={post} onPostUpdated={loadPosts} />
+            ))}
+          </div>
+        ) : (
+          <div className="bg-white rounded-lg shadow p-8 text-center">
+            <p className="text-gray-600">
+              {selectedRankings.length > 0 
+                ? 'No posts match your selected filters.' 
+                : 'No posts yet. Be the first to post!'}
+            </p>
+          </div>
+        )}
       </main>
 
       <CreatePostButton onPostCreated={() => loadPosts(selectedGameType)} />

@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { formatDistanceToNow } from 'date-fns';
-import { FaTrash, FaEdit, FaSave, FaTimes } from 'react-icons/fa';
+import { FaTrash, FaEdit, FaSave, FaTimes, FaComment } from 'react-icons/fa';
 import { SiLeagueoflegends, SiValorant, SiRiotgames } from 'react-icons/si';
 import { updatePost, deletePost } from '../services/api';
 import { toast } from 'react-toastify';
+import CommentList from './CommentList';
 
 interface PostItemProps {
   post: {
@@ -23,6 +24,7 @@ interface PostItemProps {
       name: string;
       email: string;
     };
+    commentCount: number;
   };
   onPostUpdated: () => void;
 }
@@ -72,6 +74,7 @@ export default function PostItem({ post, onPostUpdated }: PostItemProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(post.content);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [showComments, setShowComments] = useState(false);
   
   // Get current user from localStorage
   const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
@@ -253,12 +256,22 @@ export default function PostItem({ post, onPostUpdated }: PostItemProps) {
       {/* Post actions */}
       <div className="flex justify-between items-center text-gray-500 text-sm">
         <div className="flex space-x-4">
+          <button 
+            onClick={() => setShowComments(!showComments)}
+            className="flex items-center hover:text-blue-600"
+          >
+            <FaComment className="mr-1" />
+            <span>{post.commentCount || 0} Comments</span>
+          </button>
           {/* Like button could go here */}
           {/* Comment button could go here */}
         </div>
         
         {/* Edit/Delete buttons moved to top */}
       </div>
+
+      {/* Post comments */}
+      <CommentList postId={post.id} isExpanded={showComments} />
     </div>
   );
 } 

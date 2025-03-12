@@ -21,9 +21,9 @@ public class OAuth2Service {
 
     public String processOAuthLogin(Map<String, Object> attributes) {
         OAuth2UserInfo oAuth2UserInfo = new OAuth2UserInfo(attributes);
-
+        
         Optional<User> existingUser = userRepository.findByEmail(oAuth2UserInfo.getEmail());
-
+        
         User user;
         if (existingUser.isPresent()) {
             user = existingUser.get();
@@ -40,9 +40,9 @@ public class OAuth2Service {
             user.setProvider("google");
             user.setProviderId(oAuth2UserInfo.getId());
         }
-
+        
         userRepository.save(user);
-
+        
         return tokenProvider.generateToken(user);
     }
-}
+} 

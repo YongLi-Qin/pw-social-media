@@ -88,9 +88,4 @@ public class AuthController {
             return ResponseEntity.status(500).body("Authentication failed: " + e.getMessage());
         }
     }
-}
-
-@Data
-class GoogleLoginRequest {
-    private String credential;
 } 

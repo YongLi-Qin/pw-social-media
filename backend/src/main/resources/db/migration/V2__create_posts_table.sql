@@ -8,8 +8,3 @@ CREATE TABLE posts (
     FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
--- 添加一些测试数据
-INSERT INTO posts (content, user_id) VALUES
-('Hello, this is my first post!', 1),
-('Testing the posts feature', 1),
-('Welcome to our social media platform', 2); 

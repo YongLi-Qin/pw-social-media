@@ -2,10 +2,14 @@ package com.example.demo.model;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.NoArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
-@Data
 @Entity
 @Table(name = "users")
+@Data
+@NoArgsConstructor
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -20,10 +24,9 @@ public class User {
     private String name;
     private String avatar;
 
-
     @Column
     private String provider; // "local" or "google"
-
+    
     @Column
     private String providerId; // Google's user ID
 } 

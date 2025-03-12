@@ -34,6 +34,6 @@ build/
 
 ### 环境变量和敏感信息 ###
 .env
-src/main/resources/application.properties
-src/main/resources/application-dev.properties
-src/main/resources/application-prod.properties
+backend/src/main/resources/application.properties
+backendsrc/main/resources/application-dev.properties
+backendsrc/main/resources/application-prod.properties

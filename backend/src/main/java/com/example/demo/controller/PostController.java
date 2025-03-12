@@ -13,7 +13,10 @@ import com.example.demo.service.PostService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import com.example.demo.dto.CommentDto;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -56,9 +59,12 @@ public class PostController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Post>> getAllPosts() {
-        // 不需要验证用户身份
-        return ResponseEntity.ok(postService.getAllPosts());
+    public ResponseEntity<List<PostDto>> getAllPosts() {
+        List<Post> posts = postService.getAllPosts();
+        List<PostDto> postDtos = posts.stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(postDtos);
     }
 
     @PutMapping("/{postId}")
@@ -96,9 +102,13 @@ public class PostController {
         dto.setId(post.getId());
         dto.setContent(post.getContent());
         dto.setImageUrl(post.getImageUrl());
-        dto.setCreatedAt(post.getCreatedAt());
-        dto.setUpdatedAt(post.getUpdatedAt());
-        dto.setGameType(post.getGameType().name());
+        
+        // 将 LocalDateTime 转换为字符串
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        dto.setCreatedAt(post.getCreatedAt().format(formatter));
+        dto.setUpdatedAt(post.getUpdatedAt().format(formatter));
+        
+        dto.setGameType(post.getGameType());
         
         // 设置用户信息
         if (post.getUser() != null) {
@@ -113,10 +123,42 @@ public class PostController {
         if (post.getGameRanking() != null) {
             PostDto.GameRankingDto rankingDto = new PostDto.GameRankingDto();
             rankingDto.setId(post.getGameRanking().getId());
-            rankingDto.setGameType(post.getGameRanking().getGameType().name());
+            rankingDto.setGameType(post.getGameRanking().getGameType());
             rankingDto.setRankingName(post.getGameRanking().getRankingName());
             rankingDto.setRankingScore(post.getGameRanking().getRankingScore());
             dto.setGameRanking(rankingDto);
+        }
+        
+        // 添加评论数量
+        dto.setCommentCount(post.getCommentCount());
+        
+        // 添加最近的3条评论
+        if (post.getComments() != null && !post.getComments().isEmpty()) {
+            List<CommentDto> recentComments = post.getComments().stream()
+                    .sorted((c1, c2) -> c2.getCreatedAt().compareTo(c1.getCreatedAt())) // 按时间降序排序
+                    .limit(3) // 只取前3条
+                    .map(comment -> {
+                        CommentDto commentDto = new CommentDto();
+                        commentDto.setId(comment.getId());
+                        commentDto.setContent(comment.getContent());
+                        
+                        // 格式化日期时间
+                        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+                        commentDto.setCreatedAt(comment.getCreatedAt().format(formatter));
+                        
+                        // 设置用户信息
+                        CommentDto.UserDto userDto = new CommentDto.UserDto();
+                        userDto.setId(comment.getUser().getId());
+                        userDto.setName(comment.getUser().getName());
+                        userDto.setEmail(comment.getUser().getEmail());
+                        commentDto.setUser(userDto);
+                        
+                        commentDto.setPostId(post.getId());
+                        return commentDto;
+                    })
+                    .collect(Collectors.toList());
+            
+            dto.setRecentComments(recentComments);
         }
         
         return dto;

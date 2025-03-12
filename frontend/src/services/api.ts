@@ -109,5 +109,73 @@ export async function googleLogin(token: string) {
   }).then((res) => res.json());
 }
 
+// 评论相关API
+export const createComment = async (content: string, postId: number): Promise<any> => {
+  const token = localStorage.getItem('token');
+  console.log("Creating comment with token:", token ? "present" : "missing");
+  
+  if (!token) {
+    throw new Error("Authentication required");
+  }
+  
+  try {
+    const response = await axios.post(
+      `${API_URL}/comments`,
+      { content, postId },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error details:", error);
+    throw error;
+  }
+};
+
+export const getCommentsByPostId = async (postId: number): Promise<any> => {
+  console.log(`Calling API: ${API_URL}/comments/post/${postId}`);
+  
+  try {
+    // 不使用认证令牌，简化请求
+    const response = await axios.get(`${API_URL}/comments/post/${postId}`);
+    console.log("Response:", response);
+    return response.data || [];
+  } catch (error) {
+    console.error("Error details:", error);
+    // 返回空数组而不是抛出错误，避免UI崩溃
+    return [];
+  }
+};
+
+export const updateComment = async (commentId: number, content: string, postId: number): Promise<any> => {
+  const token = localStorage.getItem('token');
+  const response = await axios.put(
+    `${API_URL}/comments/${commentId}`,
+    { content, postId },
+    {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    }
+  );
+  return response.data;
+};
+
+export const deleteComment = async (commentId: number): Promise<any> => {
+  const token = localStorage.getItem('token');
+  const response = await axios.delete(
+    `${API_URL}/comments/${commentId}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    }
+  );
+  return response.data;
+};
 
 export default api; 
