@@ -142,9 +142,9 @@ public class PostController {
                         commentDto.setId(comment.getId());
                         commentDto.setContent(comment.getContent());
                         
-                        // 格式化日期时间
-                        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-                        commentDto.setCreatedAt(comment.getCreatedAt().format(formatter));
+                        // 使用已定义的 formatter 格式化日期时间
+                        String formattedDate = comment.getCreatedAt().format(formatter);
+                        commentDto.setCreatedAt(formattedDate);
                         
                         // 设置用户信息
                         CommentDto.UserDto userDto = new CommentDto.UserDto();

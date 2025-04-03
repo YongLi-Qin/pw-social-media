@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.time.format.DateTimeFormatter;
 
 @Service
 @RequiredArgsConstructor
@@ -88,8 +89,12 @@ public class CommentService {
         CommentDto dto = new CommentDto();
         dto.setId(comment.getId());
         dto.setContent(comment.getContent());
-        dto.setCreatedAt(comment.getCreatedAt());
-        dto.setUpdatedAt(comment.getUpdatedAt());
+        
+        // 将 LocalDateTime 转换为字符串
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        dto.setCreatedAt(comment.getCreatedAt().format(formatter));
+        dto.setUpdatedAt(comment.getUpdatedAt().format(formatter));
+        
         dto.setPostId(comment.getPost().getId());
         
         if (comment.getUser() != null) {
