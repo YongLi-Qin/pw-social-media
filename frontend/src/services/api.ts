@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { AuthResponse, LoginRequest, SignupRequest } from '../types/auth';
+import { toast } from 'react-toastify';
 
 const API_URL = 'http://localhost:8000/api';
 
@@ -9,6 +10,7 @@ const api = axios.create({
     'Content-Type': 'application/json',
   },
 });
+
 // 添加 GameRanking 接口
 export interface GameRanking {
   id: number;
@@ -18,28 +20,96 @@ export interface GameRanking {
   rankingType: string;
 }
 
-// 添加获取游戏排名的函数
-export const getRankingsByGameType = async (gameType: GameType): Promise<GameRanking[]> => {
-  const response = await api.get<GameRanking[]>(`/rankings/game/${gameType}`);
-  return response.data;
+// 前端使用的枚举（用于URL和显示）
+export enum GameType {
+  GENERAL = 'all-games',
+  VALORANT = 'valorant',
+  LEAGUE_OF_LEGENDS = 'league-of-legends'
+}
+
+// 映射到后端期望的格式
+const gameTypeToBackend = {
+  [GameType.GENERAL]: 'GENERAL',
+  [GameType.VALORANT]: 'VALORANT',
+  [GameType.LEAGUE_OF_LEGENDS]: 'LEAGUE_OF_LEGENDS'
 };
 
-export enum GameType {
-  GENERAL = 'GENERAL',
-  LEAGUE_OF_LEGENDS = 'LEAGUE_OF_LEGENDS',
-  VALORANT = 'VALORANT'
-}
+// 反向映射，从URL参数到GameType
+export const urlToGameType = (urlParam: string): GameType | null => {
+  switch (urlParam.toLowerCase()) {
+    case 'valorant':
+      return GameType.VALORANT;
+    case 'league-of-legends':
+      return GameType.LEAGUE_OF_LEGENDS;
+    case 'all-games':
+      return GameType.GENERAL;
+    default:
+      return null;
+  }
+};
 
-export interface PostRequest {
-  content: string;
-  imageUrl?: string;
-  gameType: GameType;
-}
+// 获取特定游戏类型的排名
+export const getRankingsByGameType = async (gameType: GameType): Promise<any[]> => {
+  try {
+    // 转换为后端期望的格式
+    const backendGameType = gameTypeToBackend[gameType];
+    
+    if (!backendGameType) {
+      console.error(`Invalid game type: ${gameType}`);
+      return [];
+    }
+    
+    const response = await axios.get(`${API_URL}/rankings/game/${backendGameType}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching rankings by game type:', error);
+    return [];
+  }
+};
 
-// 添加按游戏类型获取帖子的方法
-export const getPostsByGameType = async (gameType: GameType) => {
-  const response = await api.get(`/posts/game/${gameType}`);
-  return response.data;
+// 获取特定游戏类型的帖子
+export const getPostsByGameType = async (gameType: GameType): Promise<any[]> => {
+  try {
+    // 转换为后端期望的格式
+    const backendGameType = gameTypeToBackend[gameType];
+    
+    if (!backendGameType) {
+      console.error(`Invalid game type: ${gameType}`);
+      return [];
+    }
+    
+    console.log(`[DEBUG] Posts for ${backendGameType}: `);
+    console.log(`[DEBUG] API URL: ${API_URL}/posts/game/${backendGameType}`);
+    
+    const response = await axios.get(`${API_URL}/posts/game/${backendGameType}`);
+    
+    // 添加日志检查返回的数据结构
+    console.log(`[DEBUG] Posts for ${backendGameType}:`, response.data);
+    
+    // 检查第一个帖子的用户信息
+    if (response.data && response.data.length > 0) {
+      console.log(`[DEBUG] First post user:`, response.data[0].user);
+    }
+    
+    // 验证返回的数据
+    const posts = response.data;
+    return posts.map((post: any) => {
+      console.log(`[DEBUG] Processing post:`, post.id, post.user);
+      return {
+        ...post,
+        // 确保 user 字段存在，如果不存在则提供默认值
+        user: post.user || { 
+          id: 0, 
+          name: 'Unknown User', 
+          email: 'unknown@example.com' 
+        }
+      };
+    });
+  } catch (error) {
+    console.error('Error fetching posts by game type:', error);
+    console.error('Error details:', error.response?.data || error.message);
+    return [];
+  }
 };
 
 // 请求拦截器添加 token

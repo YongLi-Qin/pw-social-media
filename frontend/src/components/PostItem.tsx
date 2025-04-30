@@ -1,32 +1,34 @@
-import { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { formatDistanceToNow } from 'date-fns';
-import { FaTrash, FaEdit, FaSave, FaTimes, FaComment } from 'react-icons/fa';
+import { FaTrash, FaEdit, FaSave, FaTimes, FaComment, FaThumbsUp, FaShare, FaEllipsisH, FaPencilAlt } from 'react-icons/fa';
 import { SiLeagueoflegends, SiValorant, SiRiotgames } from 'react-icons/si';
+import { FaGamepad } from 'react-icons/fa';
 import { updatePost, deletePost } from '../services/api';
 import { toast } from 'react-toastify';
 import CommentList from './CommentList';
+import { GameType } from '../services/api';
 
-interface PostItemProps {
-  post: {
+interface User {
+  id: number;
+  name: string;
+  email: string;
+  picture?: string;  // 改用 picture 而不是 avatar
+}
+
+interface Post {
+  id: number;
+  content: string;
+  imageUrl?: string;
+  createdAt: string;
+  gameType: string;
+  gameRanking?: {
     id: number;
-    content: string;
-    imageUrl?: string;
-    createdAt: string;
     gameType: string;
-    gameRanking?: {
-      id: number;
-      gameType: string;
-      rankingName: string;
-      rankingScore: number;
-    };
-    user: {
-      id: number;
-      name: string;
-      email: string;
-    };
-    commentCount: number;
+    rankingName: string;
+    rankingScore: number;
   };
-  onPostUpdated: () => void;
+  user: User;
+  commentCount: number;
 }
 
 // Helper function to get ranking image path
@@ -56,29 +58,41 @@ const getRankingImagePath = (gameType: string, rankingName: string): string => {
 
 // Helper function to get rank color for fallback
 const getRankColor = (rankName: string): string => {
-  switch(rankName.toLowerCase()) {
-    case 'iron': return 'bg-gray-500';
-    case 'bronze': return 'bg-amber-700';
-    case 'silver': return 'bg-gray-300';
-    case 'gold': return 'bg-yellow-500';
-    case 'platinum': return 'bg-cyan-400';
-    case 'diamond': return 'bg-blue-400';
-    case 'master': return 'bg-purple-500';
-    case 'grandmaster': return 'bg-red-500';
-    case 'challenger': return 'bg-gradient-to-r from-blue-500 to-purple-500';
-    default: return 'bg-gray-400';
-  }
+  const rankName_lower = rankName.toLowerCase();
+  if (rankName_lower.includes('iron')) return 'bg-gray-500';
+  if (rankName_lower.includes('bronze')) return 'bg-amber-700';
+  if (rankName_lower.includes('silver')) return 'bg-gray-400';
+  if (rankName_lower.includes('gold')) return 'bg-yellow-500';
+  if (rankName_lower.includes('platinum')) return 'bg-cyan-400';
+  if (rankName_lower.includes('diamond')) return 'bg-blue-500';
+  if (rankName_lower.includes('master')) return 'bg-purple-600';
+  if (rankName_lower.includes('grandmaster')) return 'bg-red-600';
+  if (rankName_lower.includes('challenger')) return 'bg-gradient-to-r from-cyan-500 to-blue-500';
+  return 'bg-gray-400'; // 默认颜色
 };
 
-export default function PostItem({ post, onPostUpdated }: PostItemProps) {
+export default function PostItem({ post, onPostUpdated }: { post: Post, onPostUpdated: () => void }) {
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(post.content);
   const [isDeleting, setIsDeleting] = useState(false);
   const [showComments, setShowComments] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   
   // Get current user from localStorage
   const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
-  const isCurrentUserPost = currentUser.email === post.user.email;
+  console.log(`[DEBUG] Current user:`, currentUser);
+  
+  // Modify comparison logic
+  const isCurrentUserPost = 
+    (currentUser.email && post.user?.email && currentUser.email === post.user.email) || 
+    (currentUser.id && post.user?.id && currentUser.id === post.user.id);
+  
+  console.log(`[DEBUG] Is current user post:`, isCurrentUserPost, {
+    currentUserEmail: currentUser.email,
+    postUserEmail: post.user?.email,
+    currentUserId: currentUser.id,
+    postUserId: post.user?.id
+  });
   
   // Format date
   const formattedDate = formatDistanceToNow(new Date(post.createdAt), { addSuffix: true });
@@ -110,17 +124,26 @@ export default function PostItem({ post, onPostUpdated }: PostItemProps) {
   };
   
   const handleDelete = async () => {
-    try {
-      setIsDeleting(true);
-      await deletePost(post.id);
-      toast.success('Post deleted successfully');
-      onPostUpdated();
-    } catch (error) {
-      console.error('Failed to delete post:', error);
-      toast.error('Failed to delete post');
-      setIsDeleting(false);
+    if (window.confirm('Are you sure you want to delete this post?')) {
+      try {
+        setIsDeleting(true);
+        await deletePost(post.id);
+        toast.success('Post deleted successfully');
+        onPostUpdated();
+      } catch (error) {
+        console.error('Failed to delete post:', error);
+        toast.error('Failed to delete post');
+        setIsDeleting(false);
+      }
     }
   };
+  
+  useEffect(() => {
+    console.log(`[DEBUG] PostItem received post:`, post);
+    console.log(`[DEBUG] Post user:`, post.user);
+    console.log('Post user data:', post.user);
+    console.log('User avatar:', post.user?.picture);
+  }, [post]);
   
   return (
     <div className="bg-white rounded-lg shadow p-4 mb-4">
@@ -129,33 +152,71 @@ export default function PostItem({ post, onPostUpdated }: PostItemProps) {
         {/* User info row */}
         <div className="flex justify-between items-center mb-2">
           <div className="flex items-center">
-            <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold">
-              {post.user.name.charAt(0).toUpperCase()}
+            <div className="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center mr-3">
+              {post.user?.picture ? (
+                <img 
+                  src={post.user.picture} 
+                  alt={`${post.user.name}'s avatar`} 
+                  className="w-10 h-10 rounded-full object-cover"
+                  onError={(e) => {
+                    console.log('Picture load error:', e);
+                    e.currentTarget.style.display = 'none';
+                    const parent = e.currentTarget.parentElement;
+                    if (parent) {
+                      const span = document.createElement('span');
+                      span.className = 'text-gray-600 font-bold';
+                      span.textContent = post.user.name.charAt(0).toUpperCase();
+                      parent.appendChild(span);
+                    }
+                  }}
+                />
+              ) : (
+                <span className="text-gray-600 font-bold">
+                  {post.user.name.charAt(0).toUpperCase()}
+                </span>
+              )}
             </div>
-            <div className="ml-3">
-              <div className="font-medium">{post.user.name}</div>
+            <div>
+              <div className="font-medium">{post.user?.name || 'Unknown user'}</div>
+              <div className="text-xs text-gray-500">
+                {post.user?.email ? post.user.email : 'No email available'}
+              </div>
               <div className="text-xs text-gray-500">{formattedDate}</div>
             </div>
           </div>
           
           {/* Edit/Delete buttons for own posts */}
           {isCurrentUserPost && (
-            <div className="flex space-x-2">
+            <div className="relative">
               <button 
-                onClick={() => setIsEditing(!isEditing)} 
-                className="text-blue-500 hover:text-blue-700"
-                aria-label="Edit post"
+                onClick={() => setMenuOpen(!menuOpen)}
+                className="text-gray-500 hover:text-gray-700 focus:outline-none"
               >
-                <FaEdit />
+                <FaEllipsisH />
               </button>
-              <button 
-                onClick={handleDelete} 
-                disabled={isDeleting}
-                className="text-red-500 hover:text-red-700"
-                aria-label="Delete post"
-              >
-                <FaTrash />
-              </button>
+              
+              {menuOpen && (
+                <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10 border">
+                  <button
+                    onClick={() => {
+                      setIsEditing(true);
+                      setMenuOpen(false);
+                    }}
+                    className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
+                  >
+                    <FaPencilAlt className="mr-2" /> Edit Post
+                  </button>
+                  <button
+                    onClick={() => {
+                      handleDelete();
+                      setMenuOpen(false);
+                    }}
+                    className="flex items-center px-4 py-2 text-sm text-red-600 hover:bg-gray-100 w-full text-left"
+                  >
+                    <FaTrash className="mr-2" /> Delete Post
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -197,7 +258,7 @@ export default function PostItem({ post, onPostUpdated }: PostItemProps) {
                         // Add colored circle as fallback
                         const parent = target.parentElement;
                         if (parent) {
-                          const rankColor = getRankColor(post.gameRanking.rankingName);
+                          const rankColor = post.gameRanking ? getRankColor(post.gameRanking.rankingName) : 'bg-gray-400';
                           const circle = document.createElement('div');
                           circle.className = `w-6 h-6 rounded-full mr-3 ${rankColor}`;
                           parent.insertBefore(circle, target.nextSibling);
@@ -206,7 +267,7 @@ export default function PostItem({ post, onPostUpdated }: PostItemProps) {
                     />
                   ) : (
                     // For other game types, use colored circle
-                    <div className={`w-6 h-6 rounded-full ${getRankColor(post.gameRanking.rankingName)}`}></div>
+                    <div className={`w-6 h-6 rounded-full ${post.gameRanking ? getRankColor(post.gameRanking.rankingName) : 'bg-gray-400'}`}></div>
                   )}
                 </div>
                 <span className="font-semibold">{post.gameRanking.rankingName}</span>

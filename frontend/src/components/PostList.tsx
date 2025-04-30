@@ -1,80 +1,56 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import PostItem from './PostItem';
-import { toast } from 'react-toastify';
+
+interface User {
+  id: number;
+  name: string;
+  email: string;
+  picture: string;
+}
 
 interface Post {
   id: number;
   content: string;
   imageUrl?: string;
   createdAt: string;
-  gameType: string;
+  user: User;
   gameRanking?: {
     id: number;
-    gameType: string;
     rankingName: string;
-    rankingScore: number;
-  };
-  user: {
-    id: number;
-    name: string;
-    email: string;
   };
 }
 
 interface PostListProps {
-  initialPosts: Post[];
-  isLoading: boolean;
-  onPostUpdated?: () => void;
+  posts: Post[];
+  onPostUpdated: () => void;
 }
 
-export default function PostList({ initialPosts, isLoading, onPostUpdated }: PostListProps) {
-  const [posts, setPosts] = useState<Post[]>(initialPosts);
-  const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest');
+export default function PostList({ posts = [], onPostUpdated }: PostListProps) {
+  const [expandedPost, setExpandedPost] = useState<number | null>(null);
 
-  useEffect(() => {
-    setPosts(initialPosts);
-  }, [initialPosts]);
-
-  const sortedPosts = [...posts].sort((a, b) => {
-    const dateA = new Date(a.createdAt).getTime();
-    const dateB = new Date(b.createdAt).getTime();
-    return sortOrder === 'newest' ? dateB - dateA : dateA - dateB;
-  });
-
-  const handlePostUpdated = () => {
-    onPostUpdated?.();
+  const toggleExpand = (postId: number) => {
+    setExpandedPost(expandedPost === postId ? null : postId);
   };
 
-  if (isLoading) {
-    return <div className="text-center py-4">Loading posts...</div>;
+  if (!Array.isArray(posts)) {
+    return (
+      <div className="text-center py-4 text-gray-600">
+        No posts available
+      </div>
+    );
   }
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-end mb-4">
-        <select
-          value={sortOrder}
-          onChange={(e) => setSortOrder(e.target.value as 'newest' | 'oldest')}
-          className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-        >
-          <option value="newest">Newest First</option>
-          <option value="oldest">Oldest First</option>
-        </select>
-      </div>
-
-      {sortedPosts.map((post) => (
-        <PostItem 
-          key={post.id} 
-          post={post} 
-          onPostUpdated={handlePostUpdated} 
+      {posts.map((post) => (
+        <PostItem
+          key={post.id}
+          post={post}
+          isExpanded={expandedPost === post.id}
+          onToggleExpand={() => toggleExpand(post.id)}
+          onPostUpdated={onPostUpdated}
         />
       ))}
-
-      {posts.length === 0 && (
-        <div className="text-center py-8 text-gray-500">
-          No posts yet.
-        </div>
-      )}
     </div>
   );
 } 

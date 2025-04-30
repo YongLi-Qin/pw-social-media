@@ -194,6 +194,33 @@ export default function RankingFilter({ onFilterChange, selectedGameType }: Rank
       {isDropdownOpen && (
         <div className="absolute z-10 mt-2 w-full bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden">
           <div className="p-4">
+            {/* Unranked Option with custom icon */}
+            <div className="mb-4 border-b pb-3">
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  id="unranked"
+                  checked={selectedRankings.includes(-1)}
+                  onChange={() => handleRankingToggle(-1)}
+                  className="h-4 w-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                />
+                <label 
+                  htmlFor="unranked"
+                  className="ml-2 flex items-center text-sm text-gray-700 cursor-pointer"
+                >
+                  <img 
+                    src="/images/unrank/unrank-icon.jpg"
+                    alt="Unranked"
+                    className="w-6 h-6 mr-1.5 object-contain"
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                    }}
+                  />
+                  Unranked
+                </label>
+              </div>
+            </div>
+
             {/* Rankings Checkboxes */}
             <div className="mb-2">
               <div className="flex justify-between items-center mb-2">
