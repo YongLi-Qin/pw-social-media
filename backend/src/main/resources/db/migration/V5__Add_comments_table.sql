@@ -1,4 +1,4 @@
--- V6__Add_comments_table.sql
+-- V5__Add_comments_table.sql
 CREATE TABLE comments (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     content VARCHAR(500) NOT NULL,

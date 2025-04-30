@@ -24,6 +24,7 @@ public class PostDto {
         private Long id;
         private String name;
         private String email;
+        private String picture;
     }
 
     @Data

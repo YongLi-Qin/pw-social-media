@@ -5,6 +5,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import lombok.RequiredArgsConstructor;
 
@@ -52,4 +53,21 @@ public class UserController {
         
         return ResponseEntity.ok(profile);
     }
+
+
+    @PutMapping("/api/users/{id}/avatar")
+    public ResponseEntity<?> updateAvatar(@PathVariable Long id, @RequestBody Map<String, String> body) {
+        String avatarUrl = body.get("avatar");
+        Optional<User> userOpt = userRepository.findById(id);
+
+        if (userOpt.isPresent()) {
+            User user = userOpt.get();
+            user.setAvatar(avatarUrl);
+            userRepository.save(user);
+            return ResponseEntity.ok(user);
+        } else {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
 } 

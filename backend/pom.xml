@@ -123,7 +123,17 @@
 			<groupId>com.fasterxml.jackson.datatype</groupId>
 			<artifactId>jackson-datatype-jsr310</artifactId>
 		</dependency>
+
+
+		<!-- AWS SDK v2 for S3 -->
+		<dependency>
+			<groupId>software.amazon.awssdk</groupId>
+			<artifactId>s3</artifactId>
+			<version>2.20.130</version>
+		</dependency>
+
 	</dependencies>
+
 
 	<build>
 		<plugins>

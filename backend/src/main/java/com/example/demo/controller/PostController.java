@@ -52,11 +52,17 @@ public class PostController {
     }
 
     @GetMapping("/user")
-    public ResponseEntity<List<Post>> getUserPosts(@RequestHeader("Authorization") String authHeader) {
+    public ResponseEntity<List<PostDto>> getUserPosts(@RequestHeader("Authorization") String authHeader) {
         String token = authHeader.substring(7);
         User currentUser = authService.getCurrentUser(token);
-        return ResponseEntity.ok(postService.getPostsByUser(currentUser.getId()));
+        List<Post> posts = postService.getPostsByUser(currentUser.getId());
+
+        List<PostDto> postDtos = posts.stream()
+                .map(this::convertToDto)  // ✅ 用和 /api/posts一样的 convertToDto
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(postDtos);
     }
+
 
     @GetMapping
     public ResponseEntity<List<PostDto>> getAllPosts() {
@@ -91,9 +97,12 @@ public class PostController {
     }
 
     @GetMapping("/game/{gameType}")
-    public ResponseEntity<List<Post>> getPostsByGameType(@PathVariable GameType gameType) {
-        // 不需要验证用户身份
-        return ResponseEntity.ok(postService.getPostsByGameType(gameType));
+    public ResponseEntity<?> getPostsByGameType(@PathVariable String gameType) {
+        List<Post> posts = postService.getPostsByGameType(GameType.valueOf(gameType));
+        List<PostDto> postDtos = posts.stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(postDtos);
     }
 
     // 添加从Post到PostDto的转换方法
@@ -102,24 +111,28 @@ public class PostController {
         dto.setId(post.getId());
         dto.setContent(post.getContent());
         dto.setImageUrl(post.getImageUrl());
-        
-        // 将 LocalDateTime 转换为字符串
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-        dto.setCreatedAt(post.getCreatedAt().format(formatter));
-        dto.setUpdatedAt(post.getUpdatedAt().format(formatter));
-        
+        dto.setCreatedAt(post.getCreatedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+        dto.setUpdatedAt(post.getUpdatedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
         dto.setGameType(post.getGameType());
-        
+
         // 设置用户信息
         if (post.getUser() != null) {
             PostDto.UserDto userDto = new PostDto.UserDto();
             userDto.setId(post.getUser().getId());
             userDto.setName(post.getUser().getName());
             userDto.setEmail(post.getUser().getEmail());
+            userDto.setPicture(post.getUser().getAvatar());  // ✅ 关键：设置头像字段
+            dto.setUser(userDto);
+        } else {
+            PostDto.UserDto userDto = new PostDto.UserDto();
+            userDto.setId(0L);
+            userDto.setName("Unknown User");
+            userDto.setEmail("unknown@example.com");
+            userDto.setPicture(null);
             dto.setUser(userDto);
         }
-        
-        // 设置排名信息
+
+        // 设置游戏排名信息
         if (post.getGameRanking() != null) {
             PostDto.GameRankingDto rankingDto = new PostDto.GameRankingDto();
             rankingDto.setId(post.getGameRanking().getId());
@@ -128,39 +141,36 @@ public class PostController {
             rankingDto.setRankingScore(post.getGameRanking().getRankingScore());
             dto.setGameRanking(rankingDto);
         }
-        
-        // 添加评论数量
-        dto.setCommentCount(post.getCommentCount());
-        
+
+        // 设置评论数量
+        dto.setCommentCount(post.getComments().size());
+
         // 添加最近的3条评论
         if (post.getComments() != null && !post.getComments().isEmpty()) {
             List<CommentDto> recentComments = post.getComments().stream()
-                    .sorted((c1, c2) -> c2.getCreatedAt().compareTo(c1.getCreatedAt())) // 按时间降序排序
-                    .limit(3) // 只取前3条
+                    .sorted((c1, c2) -> c2.getCreatedAt().compareTo(c1.getCreatedAt()))
+                    .limit(3)
                     .map(comment -> {
                         CommentDto commentDto = new CommentDto();
                         commentDto.setId(comment.getId());
                         commentDto.setContent(comment.getContent());
-                        
-                        // 使用已定义的 formatter 格式化日期时间
-                        String formattedDate = comment.getCreatedAt().format(formatter);
-                        commentDto.setCreatedAt(formattedDate);
-                        
-                        // 设置用户信息
-                        CommentDto.UserDto userDto = new CommentDto.UserDto();
-                        userDto.setId(comment.getUser().getId());
-                        userDto.setName(comment.getUser().getName());
-                        userDto.setEmail(comment.getUser().getEmail());
-                        commentDto.setUser(userDto);
-                        
+                        commentDto.setCreatedAt(comment.getCreatedAt().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")));
+
+                        CommentDto.UserDto commentUserDto = new CommentDto.UserDto();
+                        commentUserDto.setId(comment.getUser().getId());
+                        commentUserDto.setName(comment.getUser().getName());
+                        commentUserDto.setEmail(comment.getUser().getEmail());
+                        commentDto.setUser(commentUserDto);
+
                         commentDto.setPostId(post.getId());
                         return commentDto;
                     })
                     .collect(Collectors.toList());
-            
+
             dto.setRecentComments(recentComments);
         }
-        
+
         return dto;
     }
+
 }
