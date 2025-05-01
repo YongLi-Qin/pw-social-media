@@ -20,6 +20,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
 
+
 @RestController
 @RequestMapping("/api/posts")
 @RequiredArgsConstructor
@@ -29,6 +30,8 @@ public class PostController {
     private final PostService postService;
     private final PostRepository postRepository;
     private final GameRankingRepository gameRankingRepository;
+    private final com.example.demo.repository.UserFollowRepository userFollowRepository;
+
 
     @PostMapping
     public ResponseEntity<PostDto> createPost(@RequestBody PostRequest request, 
@@ -50,6 +53,20 @@ public class PostController {
         Post savedPost = postRepository.save(post);
         return ResponseEntity.ok(convertToDto(savedPost));
     }
+
+    @GetMapping("/following")
+    public ResponseEntity<List<PostDto>> getFollowingPosts(@RequestHeader("Authorization") String authHeader) {
+        User currentUser = authService.getCurrentUser(authHeader.substring(7));
+        List<Long> followingIds = userFollowRepository.findFollowingIdsByFollowerId(currentUser.getId());
+
+        List<Post> posts = postRepository.findByUserIdInOrderByCreatedAtDesc(followingIds);
+        List<PostDto> postDtos = posts.stream()
+                .map(this::convertToDto)
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(postDtos);
+    }
+
 
     @GetMapping("/user")
     public ResponseEntity<List<PostDto>> getUserPosts(@RequestHeader("Authorization") String authHeader) {

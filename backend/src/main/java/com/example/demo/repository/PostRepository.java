@@ -15,4 +15,6 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     List<Post> findByGameTypeOrderByCreatedAtDesc(GameType gameType);
     @Query("SELECT p FROM Post p LEFT JOIN FETCH p.comments c LEFT JOIN FETCH p.user ORDER BY p.createdAt DESC")
     List<Post> findAllWithCommentsOrderByCreatedAtDesc();
+    List<Post> findByUserIdInOrderByCreatedAtDesc(List<Long> userIds);
+
 }
