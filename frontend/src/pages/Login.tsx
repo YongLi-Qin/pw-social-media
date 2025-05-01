@@ -25,7 +25,7 @@ export default function Login() {
         email: data.email
       }));
       
-      navigate('/home');
+      navigate('/');
     } catch (err) {
       console.error('Login error:', err);
       setError('Invalid email or password');
@@ -101,7 +101,7 @@ export default function Login() {
           <p className="mx-4 text-zinc-500">OR</p>
           <div className="flex-1 border-t border-zinc-700"></div>
         </div>
-        <GoogleLoginButton onSuccess={() => navigate('/home')} />
+        <GoogleLoginButton onSuccess={() => navigate('/')} />
         <div className="text-center text-sm mt-6">
           <Link
             to="/signup"

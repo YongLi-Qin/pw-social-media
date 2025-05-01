@@ -29,12 +29,15 @@ export default function Profile() {
     totalComments: 0,
     favoriteGame: 'Valorant',
     joinDate: 'March 2024',
+    followers: 0,
+    following: 0,
     achievements: [
       { name: 'First Post', description: 'Created your first post', earned: true },
       { name: 'Regular Contributor', description: 'Posted 10 times', earned: false },
       { name: 'Community Favorite', description: 'Received 50 likes', earned: false },
     ]
   });
+  
   const navigate = useNavigate();
   const [imageError, setImageError] = useState(false);
 
@@ -60,6 +63,8 @@ export default function Profile() {
 
       console.log('User profile from API:', response.data);
       setUser(response.data);
+      await fetchFollowStats(response.data.id);
+
       
       // 更新本地存储中的用户数据
       localStorage.setItem('user', JSON.stringify(response.data));
@@ -139,6 +144,30 @@ export default function Profile() {
     navigate('/login');
   };
 
+  const fetchFollowStats = async (userId: number) => {
+    try {
+      const token = localStorage.getItem('token');
+  
+      const [followersRes, followingRes] = await Promise.all([
+        axios.get(`http://localhost:8000/api/follow/${userId}/followers/count`, {
+          headers: { Authorization: `Bearer ${token}` }
+        }),
+        axios.get(`http://localhost:8000/api/follow/${userId}/following/count`, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+      ]);
+  
+      setStats(prev => ({
+        ...prev,
+        followers: followersRes.data.followers || 0,
+        following: followingRes.data.following || 0
+      }));
+    } catch (error) {
+      console.error('Error fetching follow stats:', error);
+    }
+  };
+  
+
   const renderAvatar = () => {
     if (!user) {
       return (
@@ -209,19 +238,23 @@ export default function Profile() {
               </div>
               
               <div className="flex flex-wrap justify-center md:justify-start gap-4 mt-6">
-                <div className="bg-zinc-800 px-4 py-2 rounded-lg">
-                  <div className="text-2xl font-bold text-white">{stats.totalPosts}</div>
-                  <div className="text-sm text-gray-400">Posts</div>
-                </div>
-                <div className="bg-zinc-800 px-4 py-2 rounded-lg">
-                  <div className="text-2xl font-bold text-white">{stats.totalComments}</div>
-                  <div className="text-sm text-gray-400">Comments</div>
-                </div>
-                <div className="bg-zinc-800 px-4 py-2 rounded-lg">
-                  <div className="text-2xl font-bold text-white">0</div>
-                  <div className="text-sm text-gray-400">Followers</div>
-                </div>
+              <div className="bg-zinc-800 px-4 py-2 rounded-lg">
+                <div className="text-2xl font-bold text-white">{stats.totalPosts}</div>
+                <div className="text-sm text-gray-400">Posts</div>
               </div>
+              <div className="bg-zinc-800 px-4 py-2 rounded-lg">
+                <div className="text-2xl font-bold text-white">{stats.totalComments}</div>
+                <div className="text-sm text-gray-400">Comments</div>
+              </div>
+              <div className="bg-zinc-800 px-4 py-2 rounded-lg">
+                <div className="text-2xl font-bold text-white">{stats.followers}</div>
+                <div className="text-sm text-gray-400">Followers</div>
+              </div>
+              <div className="bg-zinc-800 px-4 py-2 rounded-lg">
+                <div className="text-2xl font-bold text-white">{stats.following}</div>
+                <div className="text-sm text-gray-400">Following</div>
+              </div>
+            </div>
             </div>
           </div>
         </div>

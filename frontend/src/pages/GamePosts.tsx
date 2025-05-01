@@ -92,6 +92,27 @@ export default function GamePosts() {
     }
   };
 
+  const [currentView, setCurrentView] = useState<'all' | 'following'>('all');
+  const loadFollowingPosts = async () => {
+    try {
+      setIsLoading(true);
+      const token = localStorage.getItem('token');
+      const res = await fetch('http://localhost:8000/api/posts/following', {
+        method: 'GET',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json();
+      setFilteredPosts(data);
+    } catch (error) {
+      console.error('Error loading following posts:', error);
+      toast.error('Failed to load following posts');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+
+
   return (
     <div className="min-h-screen bg-zinc-900">
       <Navbar 
@@ -167,51 +188,85 @@ export default function GamePosts() {
             </div>
           </div>
 
-          {/* 中间内容区 */}
-          <div className="lg:w-2/4">
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold text-white">
-                {selectedGameType ? `${selectedGameType.replace(/-/g, ' ')} Posts` : 'All Posts'}
-              </h2>
-              <button
-                onClick={() => loadPosts(selectedGameType)}
-                className={`flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200 ${isLoading ? 'opacity-75 cursor-not-allowed' : ''}`}
-                disabled={isLoading}
-              >
-                <FaSync className={isLoading ? 'animate-spin' : ''} />
-                <span>{isLoading ? 'Refreshing...' : 'Refresh'}</span>
-              </button>
+{/* 中间内容区 */}
+    <div className="lg:w-2/4">
+    <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold text-white">
+        {currentView === 'following' 
+            ? 'Following Posts' 
+            : selectedGameType 
+            ? `${selectedGameType.replace(/-/g, ' ')} Posts` 
+            : 'All Posts'}
+        </h2>
+
+        <div className="flex gap-2">
+        <button
+            onClick={() => {
+            setCurrentView('all');
+            loadPosts(selectedGameType);
+            }}
+            className={`flex items-center space-x-2 px-4 py-2 ${
+            currentView === 'all' ? 'bg-blue-700' : 'bg-blue-600'
+            } text-white rounded-lg hover:bg-blue-700 transition-all duration-200 ${isLoading ? 'opacity-75 cursor-not-allowed' : ''}`}
+            disabled={isLoading}
+        >
+            <FaSync className={isLoading ? 'animate-spin' : ''} />
+            <span>{isLoading ? 'Refreshing...' : 'All Posts'}</span>
+        </button>
+
+        <button
+            onClick={() => {
+            setCurrentView('following');
+            loadFollowingPosts();
+            }}
+            className={`flex items-center space-x-2 px-4 py-2 ${
+            currentView === 'following' ? 'bg-green-700' : 'bg-green-600'
+            } text-white rounded-lg hover:bg-green-700 transition-all duration-200`}
+        >
+            <FaUsers />
+            <span>Following</span>
+        </button>
+        </div>
+    </div>
+
+    {/* 排名筛选仅在 All 视图中显示 */}
+    {currentView === 'all' && (
+        <RankingFilter 
+        onFilterChange={handleFilterChange} 
+        selectedGameType={selectedGameType}
+        />
+    )}
+
+    {/* 帖子加载状态 */}
+    {isLoading ? (
+        <div className="text-center py-8">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
+        <p className="mt-2 text-gray-400">Loading posts...</p>
+        </div>
+    ) : filteredPosts.length > 0 ? (
+        <div>
+        {selectedRankings.length > 0 && currentView === 'all' && (
+            <div className="mb-4 text-sm text-gray-400">
+            Showing {filteredPosts.length} filtered posts
             </div>
+        )}
+        <PostList posts={filteredPosts} onPostUpdated={() => {
+            currentView === 'following' ? loadFollowingPosts() : loadPosts(selectedGameType);
+        }} />
+        </div>
+    ) : (
+        <div className="bg-zinc-800 rounded-lg shadow p-8 text-center">
+        <p className="text-gray-400">
+            {currentView === 'following'
+            ? 'You are not following anyone yet.'
+            : selectedRankings.length > 0
+                ? 'No posts match your selected filters.'
+                : 'No posts yet. Be the first to post!'}
+        </p>
+        </div>
+    )}
+    </div>
 
-            <RankingFilter 
-              onFilterChange={handleFilterChange} 
-              selectedGameType={selectedGameType}
-            />
-
-            {isLoading ? (
-              <div className="text-center py-8">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
-                <p className="mt-2 text-gray-400">Loading posts...</p>
-              </div>
-            ) : filteredPosts.length > 0 ? (
-              <div>
-                {selectedRankings.length > 0 && (
-                  <div className="mb-4 text-sm text-gray-400">
-                    Showing {filteredPosts.length} filtered posts
-                  </div>
-                )}
-                <PostList posts={filteredPosts} onPostUpdated={() => loadPosts(selectedGameType)} />
-              </div>
-            ) : (
-              <div className="bg-zinc-800 rounded-lg shadow p-8 text-center">
-                <p className="text-gray-400">
-                  {selectedRankings.length > 0 
-                    ? 'No posts match your selected filters.' 
-                    : 'No posts yet. Be the first to post!'}
-                </p>
-              </div>
-            )}
-          </div>
 
           {/* 右侧边栏 */}
           <div className="lg:w-1/4">

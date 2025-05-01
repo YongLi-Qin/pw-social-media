@@ -56,6 +56,9 @@ const getRankingImagePath = (gameType: string, rankingName: string): string => {
   return imagePath;
 };
 
+
+
+
 // Helper function to get rank color for fallback
 const getRankColor = (rankName: string): string => {
   const rankName_lower = rankName.toLowerCase();
@@ -137,6 +140,26 @@ export default function PostItem({ post, onPostUpdated }: { post: Post, onPostUp
       }
     }
   };
+
+  const [isFollowing, setIsFollowing] = useState(false);
+
+  useEffect(() => {
+    const fetchFollowStatus = async () => {
+      try {
+        if (!post.user || currentUser.id === post.user.id) return;
+        const token = localStorage.getItem('token');
+        const res = await fetch(`http://localhost:8000/api/follow/is-following/${post.user.id}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const data = await res.json();
+        setIsFollowing(data.isFollowing);
+      } catch (error) {
+        console.error('Error checking follow status:', error);
+      }
+    };
+
+    fetchFollowStatus();
+  }, [post.user?.id]);
   
   useEffect(() => {
     console.log(`[DEBUG] PostItem received post:`, post);
@@ -186,39 +209,35 @@ export default function PostItem({ post, onPostUpdated }: { post: Post, onPostUp
           </div>
           
           {/* Edit/Delete buttons for own posts */}
-          {isCurrentUserPost && (
-            <div className="relative">
-              <button 
-                onClick={() => setMenuOpen(!menuOpen)}
-                className="text-gray-500 hover:text-gray-700 focus:outline-none"
+          {!isCurrentUserPost && post.user?.id && (
+              <button
+                onClick={async () => {
+                  try {
+                    const token = localStorage.getItem('token');
+                    if (isFollowing) {
+                      await fetch(`http://localhost:8000/api/follow/${post.user.id}`, {
+                        method: 'DELETE',
+                        headers: { Authorization: `Bearer ${token}` }
+                      });
+                      setIsFollowing(false);
+                    } else {
+                      await fetch(`http://localhost:8000/api/follow/${post.user.id}`, {
+                        method: 'POST',
+                        headers: { Authorization: `Bearer ${token}` }
+                      });
+                      setIsFollowing(true);
+                    }
+                  } catch (error) {
+                    console.error('Failed to toggle follow:', error);
+                  }
+                }}
+                className={`px-4 py-1 text-sm font-medium rounded-full shadow 
+                  ${isFollowing ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-blue-100 text-blue-700 hover:bg-blue-200'}`}
               >
-                <FaEllipsisH />
+                {isFollowing ? '✅ Following' : 'Follow'}
               </button>
-              
-              {menuOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10 border">
-                  <button
-                    onClick={() => {
-                      setIsEditing(true);
-                      setMenuOpen(false);
-                    }}
-                    className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
-                  >
-                    <FaPencilAlt className="mr-2" /> Edit Post
-                  </button>
-                  <button
-                    onClick={() => {
-                      handleDelete();
-                      setMenuOpen(false);
-                    }}
-                    className="flex items-center px-4 py-2 text-sm text-red-600 hover:bg-gray-100 w-full text-left"
-                  >
-                    <FaTrash className="mr-2" /> Delete Post
-                  </button>
-                </div>
-              )}
-            </div>
-          )}
+            )}
+
         </div>
         
         {/* Game badges row */}

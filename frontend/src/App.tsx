@@ -35,6 +35,7 @@ function App() {
       <Router>
         <Routes>
           <Route path="/login" element={<Login />} />
+          <Route path="/signup" element={<Signup />} /> {/* 确保这个路由存在 */}
           <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
           <Route path="/games/:gameType" element={<ProtectedRoute><GamePosts /></ProtectedRoute>} />
           <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
