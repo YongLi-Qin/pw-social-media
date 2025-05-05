@@ -1,14 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PostList from '../components/PostList';
-import PostItem from '../components/PostItem';
 import CreatePostButton from '../components/CreatePostButton';
-import { getUserPosts, getUserProfile, GameType } from '../services/api';
-import { toast, ToastContainer } from 'react-toastify';
-import { FaHome, FaUserCircle, FaCalendarAlt, FaGamepad, FaTrophy, FaCamera, FaUser, FaSignOutAlt, FaEdit, FaChartLine } from 'react-icons/fa';
-import { SiRiotgames, SiLeagueoflegends, SiValorant } from 'react-icons/si';
+import { getUserPosts, GameType } from '../services/api';
+import { toast } from 'react-toastify';
+import {FaCalendarAlt,FaTrophy, FaCamera, FaUser,FaEdit, FaChartLine } from 'react-icons/fa';
 import Navbar from '../components/Navbar';
 import axios from 'axios';
+import type { Post } from '../services/api'; // ✅ 所有地方只用这个 Post 类型
 
 interface User {
   id: number;
@@ -55,12 +54,11 @@ export default function Profile() {
         return;
       }
 
-      const response = await axios.get('http://localhost:8000/api/users/profile', {
+      const response = await axios.get<User>('http://localhost:8000/api/users/profile', {
         headers: {
           Authorization: `Bearer ${token}`
         }
       });
-
       console.log('User profile from API:', response.data);
       setUser(response.data);
       await fetchFollowStats(response.data.id);
@@ -85,50 +83,63 @@ export default function Profile() {
   const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
-
+  
     try {
       const formData = new FormData();
-      formData.append('avatar', file);
-
-      const response = await fetch('http://localhost:8000/api/upload-avatar', {
+      formData.append('file', file);
+  
+      // Step 1: 上传文件到 S3
+      const response = await fetch('http://localhost:8000/api/upload', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
         body: formData
       });
-
+  
       if (!response.ok) throw new Error('Upload failed');
-
+  
       const data = await response.json();
-      console.log('Upload response:', data); // 调试用
-      
-      // 更新本地用户信息
+      console.log('Upload response:', data);
+  
+      // ✅ Step 2: 更新后端用户 avatar 字段
+      await fetch('http://localhost:8000/api/users/avatar', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: JSON.stringify({ avatarUrl: data.url })
+      });
+  
+      // ✅ Step 3: 更新前端状态（可选）
       const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
-      const updatedUser = { ...currentUser, avatar: data.avatarUrl };
+      const updatedUser = { ...currentUser, avatar: data.url };
       localStorage.setItem('user', JSON.stringify(updatedUser));
-      setUser(updatedUser);
-      
+      setUser(updatedUser); // 如果你用了 useState 保存用户信息
+  
       toast.success('Avatar updated successfully!');
+      await loadUserPosts();
     } catch (error) {
       console.error('Error uploading avatar:', error);
       toast.error('Failed to upload avatar');
     }
   };
+  
 
   const loadUserPosts = async () => {
     setIsLoading(true);
     try {
-      const posts = await getUserPosts();
+      const posts: Post[] = await getUserPosts();
       setUserPosts(posts);
       setStats(prev => ({
         ...prev,
         totalPosts: posts.length,
         totalComments: posts.reduce((total, post) => total + (post.commentCount || 0), 0)
       }));
-    } catch (error) {
-      toast.error('Failed to load posts');
+    } catch (error: unknown) {
       console.error('Error loading posts:', error);
+      toast.error('Failed to load posts');
     } finally {
       setIsLoading(false);
     }
@@ -138,24 +149,20 @@ export default function Profile() {
     setSelectedGameType(gameType);
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    navigate('/login');
-  };
 
   const fetchFollowStats = async (userId: number) => {
     try {
       const token = localStorage.getItem('token');
   
       const [followersRes, followingRes] = await Promise.all([
-        axios.get(`http://localhost:8000/api/follow/${userId}/followers/count`, {
+        axios.get<{ followers: number }>(`http://localhost:8000/api/follow/${userId}/followers/count`, {
           headers: { Authorization: `Bearer ${token}` }
         }),
-        axios.get(`http://localhost:8000/api/follow/${userId}/following/count`, {
+        axios.get<{ following: number }>(`http://localhost:8000/api/follow/${userId}/following/count`, {
           headers: { Authorization: `Bearer ${token}` }
         })
       ]);
+      
   
       setStats(prev => ({
         ...prev,
@@ -216,9 +223,19 @@ export default function Profile() {
               <div className="w-36 h-36 rounded-full border-4 border-zinc-900 overflow-hidden bg-zinc-800">
                 {renderAvatar()}
               </div>
-              <button className="absolute bottom-2 right-2 bg-zinc-700 p-2 rounded-full text-white hover:bg-zinc-600">
+              <button 
+                onClick={handleAvatarClick} 
+                className="absolute bottom-2 right-2 bg-zinc-700 p-2 rounded-full text-white hover:bg-zinc-600"
+              >
                 <FaCamera />
               </button>
+              <input
+                id="avatar-input"
+                type="file"
+                accept="image/*"
+                onChange={handleFileSelect}
+                className="hidden"
+              />
             </div>
             
             {/* 用户信息 */}

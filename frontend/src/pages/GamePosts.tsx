@@ -5,25 +5,11 @@ import Navbar from '../components/Navbar';
 import PostList from '../components/PostList';
 import CreatePostButton from '../components/CreatePostButton';
 import RankingFilter from '../components/RankingFilter';
-import { getAllPosts, getPostsByGameType, GameType, urlToGameType } from '../services/api';
+import { getAllPosts, getPostsByGameType, GameType, urlToGameType, Post } from '../services/api';
 import { toast } from 'react-toastify';
 
-interface Post {
-  id: number;
-  content: string;
-  imageUrl?: string;
-  createdAt: string;
-  user: {
-    id: number;
-    name: string;
-    email: string;
-    picture: string;
-  };
-  gameRanking?: {
-    id: number;
-    rankingName: string;
-  };
-}
+
+
 
 export default function GamePosts() {
   const { gameType: gameTypeParam } = useParams<{ gameType: string }>();
@@ -57,12 +43,12 @@ export default function GamePosts() {
   const loadPosts = async (gameType: GameType | null = null) => {
     try {
       setIsLoading(true);
-      let data;
+      let data: Post[];
       
       if (gameType && gameType !== GameType.GENERAL) {
         data = await getPostsByGameType(gameType);
       } else {
-        data = await getAllPosts();
+        data = await getAllPosts() as Post[];
       }
       
       setPosts(data);

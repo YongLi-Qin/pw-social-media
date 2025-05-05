@@ -1,12 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import  { useState, useEffect } from 'react';
 import { formatDistanceToNow } from 'date-fns';
-import { FaTrash, FaEdit, FaSave, FaTimes, FaComment, FaThumbsUp, FaShare, FaEllipsisH, FaPencilAlt } from 'react-icons/fa';
+import { FaTrash, FaSave, FaTimes, FaComment, FaPencilAlt } from 'react-icons/fa';
 import { SiLeagueoflegends, SiValorant, SiRiotgames } from 'react-icons/si';
-import { FaGamepad } from 'react-icons/fa';
 import { updatePost, deletePost } from '../services/api';
 import { toast } from 'react-toastify';
 import CommentList from './CommentList';
-import { GameType } from '../services/api';
 
 interface User {
   id: number;
@@ -78,9 +76,7 @@ export default function PostItem({ post, onPostUpdated }: { post: Post, onPostUp
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(post.content);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [showComments, setShowComments] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
-  
+  const [showComments, setShowComments] = useState(false);  
   // Get current user from localStorage
   const currentUser = JSON.parse(localStorage.getItem('user') || '{}');
   console.log(`[DEBUG] Current user:`, currentUser);
@@ -207,6 +203,33 @@ export default function PostItem({ post, onPostUpdated }: { post: Post, onPostUp
               <div className="text-xs text-gray-500">{formattedDate}</div>
             </div>
           </div>
+
+          <div className="flex justify-between items-center text-gray-500 text-sm">
+          <div className="flex space-x-4">
+            <button onClick={() => setShowComments(!showComments)} className="flex items-center hover:text-blue-600">
+              <FaComment className="mr-1" />
+              <span>{post.commentCount || 0} Comments</span>
+            </button>
+          </div>
+
+          {isCurrentUserPost && (
+            <div className="flex space-x-2">
+              <button
+                onClick={() => setIsEditing(true)}
+                className="flex items-center px-3 py-1 bg-yellow-100 text-yellow-800 rounded hover:bg-yellow-200"
+              >
+                <FaPencilAlt className="mr-1" /> Edit
+              </button>
+              <button
+                onClick={handleDelete}
+                className="flex items-center px-3 py-1 bg-red-100 text-red-700 rounded hover:bg-red-200"
+              >
+                <FaTrash className="mr-1" /> Delete
+              </button>
+            </div>
+          )}
+        </div>
+
           
           {/* Edit/Delete buttons for own posts */}
           {!isCurrentUserPost && post.user?.id && (

@@ -4,6 +4,11 @@ import { SiRiotgames } from 'react-icons/si';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 
+
+
+
+
+
 export default function SignUp() {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
@@ -56,6 +61,8 @@ export default function SignUp() {
     return Object.keys(newErrors).length === 0;
   };
 
+  
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -67,7 +74,16 @@ export default function SignUp() {
     
     try {
       // 根据您的后端API调整URL
-      const response = await axios.post('http://localhost:8000/api/auth/signup', {
+
+      interface SignUpResponse {
+        token?: string;
+        id: number;
+        name: string;
+        email: string;
+        avatar?: string;
+      }
+      
+      const response = await axios.post<SignUpResponse>('http://localhost:8000/api/auth/signup', {
         name: formData.name,
         email: formData.email,
         password: formData.password

@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
@@ -6,7 +6,6 @@ import Home from './pages/Home';
 import Profile from './pages/Profile';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import GamePosts from './pages/GamePosts';
-import ProtectedRoute from './components/ProtectedRoute';
 
 // 受保护的路由组件
 function ProtectedRoute({ children }: { children: JSX.Element }) {

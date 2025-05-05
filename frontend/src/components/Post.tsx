@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Comment } from './Comment';
-import { CommentForm } from './CommentForm';
+import CommentForm from './CommentForm';
+import Comment from './Comment';
+
 
 interface PostProps {
   post: {
@@ -26,8 +27,30 @@ interface PostProps {
   };
 }
 
+// 在 PostProps 接口下添加评论类型定义
+interface Comment {
+  id: number;
+  content: string;
+  createdAt: string;
+  user: {
+    id: number;
+    name: string;
+    avatar: string;
+  };
+}
+
 export const Post: React.FC<PostProps> = ({ post }) => {
   const [showAllComments, setShowAllComments] = useState(false);
+  const [comments, setComments] = useState<Comment[]>(post.recentComments || []);
+  
+  // 添加评论后的处理函数
+  const handleCommentAdded = (newComment: Comment) => {
+    // 更新本地评论列表
+    setComments([...comments, newComment]);
+    // 更新评论计数
+    post.commentCount = (post.commentCount || 0) + 1;
+    post.recentComments = comments;
+  };
   
   return (
     <div className="post">
@@ -46,9 +69,9 @@ export const Post: React.FC<PostProps> = ({ post }) => {
         </div>
         
         {/* 显示最近的评论 */}
-        {post.recentComments && post.recentComments.length > 0 && (
+        {comments && comments.length > 0 && (
           <div className="recent-comments">
-            {post.recentComments.map(comment => (
+            {comments.map(comment => (
               <Comment key={comment.id} comment={comment} />
             ))}
           </div>
@@ -70,7 +93,10 @@ export const Post: React.FC<PostProps> = ({ post }) => {
         )}
         
         {/* 评论表单 */}
-        <CommentForm postId={post.id} />
+        <CommentForm 
+          postId={post.id} 
+          onCommentAdded={handleCommentAdded} 
+        />
       </div>
     </div>
   );

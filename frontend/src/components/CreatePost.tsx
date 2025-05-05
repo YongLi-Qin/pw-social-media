@@ -1,5 +1,5 @@
 import { useState, useEffect, FormEvent } from 'react';
-import { createPost, getRankingsByGameType, GameType, GameRanking } from '../services/api';
+import { createPost, getRankingsByGameType, GameType, GameRanking,gameTypeToBackend } from '../services/api';
 import { toast } from 'react-toastify';
 import { SiLeagueoflegends, SiValorant, SiRiotgames } from 'react-icons/si';
 
@@ -10,6 +10,7 @@ export default function CreatePost({ onPostCreated }: { onPostCreated: () => voi
   const [selectedRankingId, setSelectedRankingId] = useState<number | null>(null);
   const [isLoadingRankings, setIsLoadingRankings] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
 
   // 当游戏类型改变时加载排名
   useEffect(() => {
@@ -40,11 +41,12 @@ export default function CreatePost({ onPostCreated }: { onPostCreated: () => voi
 
     try {
       setIsSubmitting(true);
-      await createPost({ 
-        content, 
-        gameType,
-        rankingId: selectedRankingId || undefined 
-      });
+
+    await createPost({ 
+      content, 
+      gameType: gameTypeToBackend[gameType],
+      rankingId: selectedRankingId || undefined 
+    });
       setContent('');
       setSelectedRankingId(null);
       toast.success('Post created successfully!');
