@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { GameType, GameRanking, getRankingsByGameType } from '../services/api';
 import { SiLeagueoflegends, SiValorant, SiRiotgames } from 'react-icons/si';
-import { FaChevronDown, FaChevronUp, FaFilter } from 'react-icons/fa';
+import { FaChevronDown, FaChevronUp } from 'react-icons/fa';
 
 interface RankingFilterProps {
   onFilterChange: (selectedRankings: number[]) => void;

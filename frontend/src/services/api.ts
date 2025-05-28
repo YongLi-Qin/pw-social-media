@@ -157,7 +157,7 @@ api.interceptors.request.use(
 );
 
 export const login = async (email: string, password: string): Promise<AuthResponse> => {
-  console.log("login request: " + email + password);
+  console.log("login request:", { email, password });
   const response = await api.post<AuthResponse>('/auth/login', { email, password });
   return response.data;
 };

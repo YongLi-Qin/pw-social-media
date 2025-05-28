@@ -6,6 +6,8 @@ interface LoginResponse {
     name: string;
     email: string;
     avatar?: string;
+    picture?: string;
+    isAdmin?: boolean;  // 新增管理员标识
     // 其他可能的用户字段
   };
 }
@@ -20,6 +22,8 @@ const handleLoginSuccess = (data: LoginResponse) => {
     name: data.user.name,
     email: data.user.email,
     avatar: data.user.avatar,
+    picture: data.user.picture,
+    isAdmin: data.user.isAdmin || false,  // 新增管理员标识，默认为 false
     // 其他字段...
   };
   

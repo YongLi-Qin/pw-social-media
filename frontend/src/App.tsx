@@ -4,6 +4,7 @@ import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Home from './pages/Home';
 import Profile from './pages/Profile';
+import Admin from './pages/Admin';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import GamePosts from './pages/GamePosts';
 
@@ -38,6 +39,7 @@ function App() {
           <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
           <Route path="/games/:gameType" element={<ProtectedRoute><GamePosts /></ProtectedRoute>} />
           <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+          <Route path="/admin" element={<ProtectedRoute><Admin /></ProtectedRoute>} />
         </Routes>
       </Router>
     </GoogleOAuthProvider>
