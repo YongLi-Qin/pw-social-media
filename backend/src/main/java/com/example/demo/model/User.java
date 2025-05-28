@@ -29,4 +29,7 @@ public class User {
     
     @Column
     private String providerId; // Google's user ID
-} 
+
+    @Column(name = "is_admin", nullable = false)
+    private Boolean isAdmin = false; // 新增字段，默认 false
+}

@@ -2,7 +2,6 @@ package com.example.pwsocialmedia.controller;
 
 import com.example.demo.model.Post;
 import com.example.demo.model.User;
-import com.example.demo.payload.ChangePasswordRequest;
 import com.example.demo.repository.PostRepository;
 import com.example.demo.repository.UserRepository;
 import com.example.demo.service.AuthService;
@@ -54,14 +53,4 @@ public class AdminController {
         return ResponseEntity.ok().body("Post deleted");
     }
 
-    // Change admin password
-    @PutMapping("/change-password")
-    public ResponseEntity<?> changePassword(@Valid @RequestBody ChangePasswordRequest request) {
-        boolean success = userService.changeAdminPassword(request);
-        if (success) {
-            return ResponseEntity.ok().body("Password changed successfully");
-        } else {
-            return ResponseEntity.badRequest().body("Failed to change password");
-        }
-    }
 }

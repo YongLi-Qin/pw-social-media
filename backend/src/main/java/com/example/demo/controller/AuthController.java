@@ -81,7 +81,8 @@ public class AuthController {
                 token, 
                 user.getEmail(),
                 user.getName(),
-                pictureUrl
+                pictureUrl,
+                user.getIsAdmin() != null && user.getIsAdmin()
             ));
         } catch (Exception e) {
             e.printStackTrace();

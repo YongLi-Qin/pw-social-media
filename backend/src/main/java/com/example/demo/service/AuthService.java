@@ -35,20 +35,29 @@ public class AuthService {
         user = userRepository.save(user);
 
         String token = jwtTokenProvider.generateToken(user);
-        return new AuthResponse(token, user.getEmail(), user.getName(), user.getAvatar());
+        return new AuthResponse(token, user.getName(), user.getEmail(), user.getAvatar(), user.getIsAdmin() != null && user.getIsAdmin());
     }
 
     public AuthResponse login(LoginRequest request) {
+        // 先从数据库获取用户
+        User user = userRepository.findByEmail(request.getEmail())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // 打印调试信息
+        System.out.println("🧪 email: " + request.getEmail());
+        System.out.println("🧪 raw password: " + request.getPassword());
+        System.out.println("🧪 stored password: " + user.getPassword());
+        System.out.println("🧪 password match: " + passwordEncoder.matches(request.getPassword(), user.getPassword()));
+
+        // 继续认证流程（必须保留）
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword())
         );
 
-        User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
         String token = jwtTokenProvider.generateToken(user);
-        return new AuthResponse(token, user.getEmail(), user.getName(), user.getAvatar());
+        return new AuthResponse(token, user.getName(), user.getEmail(), user.getAvatar(), user.getIsAdmin() != null && user.getIsAdmin());
     }
+
 
 
     public User getCurrentUser(String token) {

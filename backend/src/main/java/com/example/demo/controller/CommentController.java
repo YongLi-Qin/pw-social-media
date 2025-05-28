@@ -20,35 +20,22 @@ import java.util.List;
 public class CommentController {
     private final CommentService commentService;
     private final AuthService authService;
-    
+
     @PostMapping
-    public ResponseEntity<CommentDto> createComment(@Valid @RequestBody CommentRequest request) {
-        System.out.println("=== CommentController.createComment ===");
-        System.out.println("Received comment creation request: " + request);
-        System.out.println("Content: " + request.getContent());
-        System.out.println("PostId: " + request.getPostId());
-        
-        try {
-            // 创建一个临时用户，仅用于测试
-            User tempUser = new User();
-            tempUser.setId(1L);
-            tempUser.setName("Temp User");
-            tempUser.setEmail("temp@example.com");
-            System.out.println("Created temp user: " + tempUser.getName() + ", ID: " + tempUser.getId());
-            
-            CommentDto comment = commentService.createComment(
-                    request.getContent(),
-                    request.getPostId(),
-                    tempUser
-            );
-            
-            System.out.println("Comment created successfully: " + comment.getId());
-            return ResponseEntity.ok(comment);
-        } catch (Exception e) {
-            System.err.println("ERROR in createComment: " + e.getMessage());
-            e.printStackTrace();
-            throw e;
-        }
+    public ResponseEntity<CommentDto> createComment(
+            @Valid @RequestBody CommentRequest request,
+            @RequestHeader("Authorization") String authHeader) {
+
+        String token = authHeader.substring(7); // 去掉 "Bearer "
+        User currentUser = authService.getCurrentUser(token); // ✅ 解析用户
+
+        CommentDto comment = commentService.createComment(
+                request.getContent(),
+                request.getPostId(),
+                currentUser
+        );
+
+        return ResponseEntity.ok(comment);
     }
     
     @GetMapping("/post/{postId}")
