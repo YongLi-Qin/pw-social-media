@@ -166,7 +166,7 @@ export default function RankingFilter({ onFilterChange, selectedGameType }: Rank
   }
 
   return (
-    <div className="relative mb-6" ref={dropdownRef}>
+    <div className="relative z-20">
       {/* Filter Button with Badge */}
       <button
         onClick={() => setIsDropdownOpen(!isDropdownOpen)}
@@ -192,7 +192,7 @@ export default function RankingFilter({ onFilterChange, selectedGameType }: Rank
       
       {/* Dropdown Content */}
       {isDropdownOpen && (
-        <div className="absolute z-10 mt-2 w-full bg-white rounded-lg shadow-lg border border-gray-200 overflow-hidden">
+        <div className="absolute top-full left-0 right-0 bg-white border rounded-lg shadow-lg z-30">
           <div className="p-4">
             {/* Unranked Option with custom icon */}
             <div className="mb-4 border-b pb-3">
